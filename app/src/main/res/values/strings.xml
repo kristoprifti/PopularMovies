@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="action_share">Share</string>
+    <string name="action_refresh">Refresh</string>
+
+    <string name="error_message">
+        An error has occurred. Please try again by clicking REFRESH
+    </string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- - - - - - - - - - - -->
+    <!--Used by Preferences  -->
+    <!-- - - - - - - - - - - -->
+    <!-- Label for the order by preference [CHAR LIMIT=30] -->
+    <string name="pref_orderby_label">Order By</string>
+
+    <!-- Label for popular option in order by preference [CHAR LIMIT=25] -->
+    <string name="pref_orderby_label_popular">Popular</string>
+
+    <!-- Label for top rated option in order by preference [CHAR LIMIT=25] -->
+    <string name="pref_orderby_label_top_rated">Top Rated</string>
+
+    <!-- Key name for order by preference in SharedPreferences [CHAR LIMIT=NONE] -->
+    <string name="pref_orderby_key" translatable="false">order_by</string>
+
+    <!-- Value in SharedPreferences for popular ordering option [CHAR LIMIT=NONE] -->
+    <string name="pref_orderby_popular" translatable="false">popular</string>
+
+    <!-- Value in SharedPreferences for top rated ordering option [CHAR LIMIT=NONE] -->
+    <string name="pref_orderby_top_rated" translatable="false">top_rated</string>
+</resources>
