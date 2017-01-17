@@ -58,8 +58,8 @@ public class MovieDBJsonUtils {
             /* Get each property of JSON Object neccessary to create the Movie Model*/
             String originalTitleString = currentMovieJSON.getString(MOVIES_ORIGINAL_TITLE);
             String overviewString = currentMovieJSON.getString(MOVIES_OVERVIEW);
-            String posterPathString = currentMovieJSON.getString(MOVIES_POSTER_PATH);
-            String backdropPathString = currentMovieJSON.getString(MOVIES_BACKDROP_PATH);
+            String posterPathString = NetworkUtils.buildPictureUrl(currentMovieJSON.getString(MOVIES_POSTER_PATH));
+            String backdropPathString = NetworkUtils.buildPictureUrl(currentMovieJSON.getString(MOVIES_BACKDROP_PATH));
             String releaseDateString = currentMovieJSON.getString(MOVIES_RELEASE_DATE);
             float ratingValue = (float) currentMovieJSON.getDouble(MOVIES_RATING);
 

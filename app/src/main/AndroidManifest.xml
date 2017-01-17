@@ -19,6 +19,7 @@
         <activity
             android:name=".activities.MainActivity"
             android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -30,7 +31,8 @@
         <activity
             android:name=".activities.DetailActivity"
             android:parentActivityName=".activities.MainActivity"
-            tools:targetApi="jelly_bean">
+            tools:targetApi="jelly_bean"
+            android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".activities.MainActivity"/>

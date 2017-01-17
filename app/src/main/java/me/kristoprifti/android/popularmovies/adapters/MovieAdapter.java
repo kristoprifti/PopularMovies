@@ -22,7 +22,6 @@ import java.util.GregorianCalendar;
 
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.models.Movie;
-import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 /**
  * {@link MovieAdapter} exposes a list of movies to a
@@ -131,9 +130,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         int releaseYear = getYearFromDate(mMoviesList.get(position).getReleaseDate());
         if(releaseYear != 0)
             movieAdapterViewHolder.mMovieReleaseDateTextView.setText(Integer.toString(releaseYear));
-
-        String posterPath = NetworkUtils.buildPictureUrl(mMoviesList.get(position).getPosterPath());
-        Picasso.with(mContext).load(posterPath).into(movieAdapterViewHolder.mMoviePosterImageView);
+        Picasso.with(mContext).load(mMoviesList.get(position).getPosterPath()).into(movieAdapterViewHolder.mMoviePosterImageView);
     }
 
     /**

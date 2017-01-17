@@ -4,9 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
 
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.models.Movie;
@@ -16,21 +20,30 @@ public class DetailActivity extends AppCompatActivity {
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovieApp";
 
     private Movie mMovie;
-    private TextView mMovieDisplay;
+    private TextView mMovieFulltitleTextView;
+    private ImageView mMovieBackdropImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        mMovieDisplay = (TextView) findViewById(R.id.tv_display_movie);
+        mMovieFulltitleTextView = (TextView) findViewById(R.id.tv_display_movie);
+        mMovieBackdropImageView = (ImageView) findViewById(R.id.iv_movie_backdrop);
 
         Intent intent = getIntent();
 
         if (intent != null) {
             if (intent.hasExtra(Intent.EXTRA_TEXT)) {
                 mMovie = intent.getParcelableExtra(Intent.EXTRA_TEXT);
-                mMovieDisplay.setText(mMovie.getOriginalTitle());
+
+                if(getSupportActionBar() != null)
+                    getSupportActionBar().setTitle(mMovie.getOriginalTitle());
+
+                mMovieFulltitleTextView.setText(mMovie.getOriginalTitle());
+                Picasso.with(this).load(mMovie.getBackdropPath()).into(mMovieBackdropImageView);
             }
         }
     }

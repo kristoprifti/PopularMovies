@@ -3,6 +3,7 @@ package me.kristoprifti.android.popularmovies.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -16,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,8 +31,8 @@ import android.widget.TextView;
 import java.net.URL;
 import java.util.ArrayList;
 
-import me.kristoprifti.android.popularmovies.adapters.MovieAdapter;
 import me.kristoprifti.android.popularmovies.R;
+import me.kristoprifti.android.popularmovies.adapters.MovieAdapter;
 import me.kristoprifti.android.popularmovies.data.PopularMoviesPreferences;
 import me.kristoprifti.android.popularmovies.models.Movie;
 import me.kristoprifti.android.popularmovies.utilities.MovieDBJsonUtils;
@@ -60,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         /*
          * Using findViewById, we get a reference to our RecyclerView from xml. This allows us to
@@ -84,8 +88,18 @@ public class MainActivity extends AppCompatActivity implements
          *  This value should be true if you want to reverse your layout. Generally, this is only
          *  true with horizontal lists that need to support a right-to-left layout.
          */
-        GridLayoutManager layoutManager
-                = new GridLayoutManager(this, 2, recyclerViewOrientation, false);
+        GridLayoutManager layoutManager;
+
+        /*
+         * check if the device is landscape or portrait mode
+         * if its portrait show 2 columns if its landscape show 4
+        */
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
+            layoutManager = new GridLayoutManager(this, 4, recyclerViewOrientation, false);
+        } else {
+            layoutManager = new GridLayoutManager(this, 2, recyclerViewOrientation, false);
+        }
+
         mRecyclerView.setLayoutManager(layoutManager);
 
         /*
