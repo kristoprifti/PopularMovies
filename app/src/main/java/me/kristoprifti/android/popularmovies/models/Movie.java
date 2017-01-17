@@ -14,10 +14,10 @@ public class Movie implements Parcelable{
     private String backdropPath;
     private String overview;
     private String releaseDate;
-    private double rating;
+    private float rating;
 
     public Movie(String vOriginalTitle, String vPosterPath, String vBackdropPath,
-                 String vOverview, String vReleaseDate, double vRating){
+                 String vOverview, String vReleaseDate, float vRating){
         this.originalTitle = vOriginalTitle;
         this.posterPath = vPosterPath;
         this.backdropPath = vBackdropPath;
@@ -32,7 +32,7 @@ public class Movie implements Parcelable{
         backdropPath = in.readString();
         overview = in.readString();
         releaseDate = in.readString();
-        rating = in.readDouble();
+        rating = in.readFloat();
     }
 
     @Override
@@ -49,10 +49,10 @@ public class Movie implements Parcelable{
         parcel.writeString(backdropPath);
         parcel.writeString(overview);
         parcel.writeString(releaseDate);
-        parcel.writeDouble(rating);
+        parcel.writeFloat(rating);
     }
 
-    public final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
+    public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
         @Override
         public Movie createFromParcel(Parcel parcel) {
             return new Movie(parcel);
@@ -84,7 +84,7 @@ public class Movie implements Parcelable{
         return releaseDate;
     }
 
-    public double getRating() {
+    public float getRating() {
         return rating;
     }
 }

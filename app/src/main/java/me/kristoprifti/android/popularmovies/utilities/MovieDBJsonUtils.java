@@ -61,7 +61,7 @@ public class MovieDBJsonUtils {
             String posterPathString = currentMovieJSON.getString(MOVIES_POSTER_PATH);
             String backdropPathString = currentMovieJSON.getString(MOVIES_BACKDROP_PATH);
             String releaseDateString = currentMovieJSON.getString(MOVIES_RELEASE_DATE);
-            double ratingValue = currentMovieJSON.getDouble(MOVIES_RATING);
+            float ratingValue = (float) currentMovieJSON.getDouble(MOVIES_RATING);
 
             /*Create a new Movie object with all the fields retrieved*/
             Movie newMovie = new Movie(originalTitleString, posterPathString, backdropPathString,

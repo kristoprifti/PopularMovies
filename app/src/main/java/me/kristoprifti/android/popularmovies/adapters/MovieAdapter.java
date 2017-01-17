@@ -1,16 +1,28 @@
 package me.kristoprifti.android.popularmovies.adapters;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.models.Movie;
+import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 /**
  * {@link MovieAdapter} exposes a list of movies to a
@@ -19,6 +31,7 @@ import me.kristoprifti.android.popularmovies.models.Movie;
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapterViewHolder> {
 
     private ArrayList<Movie> mMoviesList;
+    private Context mContext;
 
     /*
      * An on-click handler that we've defined to make it easy for an Activity to interface with
@@ -30,7 +43,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      * The interface that receives onClick messages.
      */
     public interface MovieAdapterOnClickHandler {
-        void onClick(String selectedMovie);
+        void onClick(Movie selectedMovie);
     }
 
     /**
@@ -47,11 +60,20 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      * Cache of the children views for a forecast list item.
      */
     class MovieAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        final TextView mMovieTextView;
+        private TextView mMovieTitleTextView;
+        private TextView mMovieReleaseDateTextView;
+        private TextView mMovieRatingTextView;
+        private RatingBar mMovieRatingBar;
+        private ImageView mMoviePosterImageView;
 
         MovieAdapterViewHolder(View view) {
             super(view);
-            mMovieTextView = (TextView) view.findViewById(R.id.tv_movie_data);
+            mMovieTitleTextView = (TextView) view.findViewById(R.id.tv_movie_full_title);
+            mMovieReleaseDateTextView = (TextView) view.findViewById(R.id.tv_movie_release_date);
+            mMovieRatingTextView = (TextView) view.findViewById(R.id.tv_movie_rating_value);
+            mMovieRatingBar = (RatingBar) view.findViewById(R.id.rb_movie_rating);
+            mMoviePosterImageView = (ImageView) view.findViewById(R.id.iv_movie_poster);
+
             view.setOnClickListener(this);
         }
 
@@ -63,7 +85,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         @Override
         public void onClick(View v) {
             int adapterPosition = getAdapterPosition();
-            String currentMovie = mMoviesList.get(adapterPosition).getOriginalTitle();
+            Movie currentMovie = mMoviesList.get(adapterPosition);
             mClickHandler.onClick(currentMovie);
         }
     }
@@ -81,9 +103,9 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      */
     @Override
     public MovieAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
-        Context context = viewGroup.getContext();
+        mContext = viewGroup.getContext();
         int layoutIdForListItem = R.layout.movie_list_item;
-        LayoutInflater inflater = LayoutInflater.from(context);
+        LayoutInflater inflater = LayoutInflater.from(mContext);
 
         View view = inflater.inflate(layoutIdForListItem, viewGroup, false);
         return new MovieAdapterViewHolder(view);
@@ -99,10 +121,19 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      *                                  contents of the item at the given position in the data set.
      * @param position                  The position of the item within the adapter's data set.
      */
+    @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(MovieAdapterViewHolder movieAdapterViewHolder, int position) {
-        String currentMovie = mMoviesList.get(position).getOriginalTitle();
-        movieAdapterViewHolder.mMovieTextView.setText(currentMovie);
+        movieAdapterViewHolder.mMovieTitleTextView.setText(mMoviesList.get(position).getOriginalTitle());
+        movieAdapterViewHolder.mMovieRatingBar.setRating(mMoviesList.get(position).getRating() / 2);
+        movieAdapterViewHolder.mMovieRatingTextView.setText(mMoviesList.get(position).getRating() + mContext.getString(R.string.out_of_ten));
+
+        int releaseYear = getYearFromDate(mMoviesList.get(position).getReleaseDate());
+        if(releaseYear != 0)
+            movieAdapterViewHolder.mMovieReleaseDateTextView.setText(Integer.toString(releaseYear));
+
+        String posterPath = NetworkUtils.buildPictureUrl(mMoviesList.get(position).getPosterPath());
+        Picasso.with(mContext).load(posterPath).into(movieAdapterViewHolder.mMoviePosterImageView);
     }
 
     /**
@@ -127,5 +158,20 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
     public void setMoviesList(ArrayList<Movie> moviesList) {
         mMoviesList = moviesList;
         notifyDataSetChanged();
+    }
+
+    private int getYearFromDate(String releaseDate){
+        @SuppressLint("SimpleDateFormat")
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        Date currentDate;
+        try {
+            currentDate = df.parse(releaseDate);
+            Calendar calendar = new GregorianCalendar();
+            calendar.setTime(currentDate);
+            return calendar.get(Calendar.YEAR);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return 0;
+        }
     }
 }
