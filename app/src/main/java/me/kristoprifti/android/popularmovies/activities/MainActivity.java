@@ -3,9 +3,14 @@ package me.kristoprifti.android.popularmovies.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
@@ -16,6 +21,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -47,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements
 
     private static boolean PREFERENCES_HAVE_BEEN_UPDATED = false;
 
+    private FrameLayout mainView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements
          * do things like set the adapter of the RecyclerView and toggle the visibility.
          */
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_movies);
+        mainView = (FrameLayout) findViewById(R.id.mainView);
 
         /* This TextView is used to display errors and will be hidden if there are no errors */
         mErrorMessageDisplay = (TextView) findViewById(R.id.tv_error_message_display);
@@ -107,10 +117,9 @@ public class MainActivity extends AppCompatActivity implements
          * created and (if the activity/fragment is currently started) starts the loader. Otherwise
          * the last created loader is re-used.
          */
-        getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+        initLoader();
 
         Log.d(TAG, "onCreate: registering preference changed listener");
-
         /*
          * Register MainActivity as an OnPreferenceChangedListener to receive a callback when a
          * SharedPreference has changed. Please note that we must unregister MainActivity as an
@@ -285,7 +294,7 @@ public class MainActivity extends AppCompatActivity implements
          */
         if (PREFERENCES_HAVE_BEEN_UPDATED) {
             Log.d(TAG, "onStart: preferences were updated");
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+            initLoader();
             PREFERENCES_HAVE_BEEN_UPDATED = false;
         }
     }
@@ -315,7 +324,7 @@ public class MainActivity extends AppCompatActivity implements
 
         if (id == R.id.action_refresh) {
             invalidateData();
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+            initLoader();
             return true;
         }
 
@@ -335,5 +344,38 @@ public class MainActivity extends AppCompatActivity implements
          * data.
          */
         PREFERENCES_HAVE_BEEN_UPDATED = true;
+    }
+
+    /*Check if app is connected to the internet*/
+    public void initLoader() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnectedOrConnecting()){
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+        } else {
+            Snackbar snackbar = Snackbar
+                    .make(mainView, R.string.no_internet, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.action_retry, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            initLoader();
+                        }
+                    });
+
+            // Changing message text color
+            snackbar.setActionTextColor(ContextCompat.getColor(this, R.color.colorAccent));
+
+            // Changing snackbar background color
+            ViewGroup group = (ViewGroup) snackbar.getView();
+            group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorPrimary));
+
+            // Changing action button text color
+            View snackbarView = snackbar.getView();
+            TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+            textView.setTextColor(Color.WHITE);
+
+            snackbar.show();
+        }
     }
 }

@@ -30,4 +30,7 @@
 
     <!-- Value in SharedPreferences for top rated ordering option [CHAR LIMIT=NONE] -->
     <string name="pref_orderby_top_rated" translatable="false">top_rated</string>
+    <string name="no_internet">No internet connection!</string>
+    <string name="action_retry">Retry</string>
+    <string name="poster_content_description">Poster of the movie</string>
 </resources>
