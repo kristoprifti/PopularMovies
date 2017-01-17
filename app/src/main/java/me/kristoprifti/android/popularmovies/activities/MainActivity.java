@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements
          * if its portrait show 2 columns if its landscape show 4
         */
         if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE){
-            layoutManager = new GridLayoutManager(this, 4, recyclerViewOrientation, false);
+            layoutManager = new GridLayoutManager(this, 3, recyclerViewOrientation, false);
         } else {
             layoutManager = new GridLayoutManager(this, 2, recyclerViewOrientation, false);
         }
@@ -155,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements
     public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle loaderArgs) {
 
         return new AsyncTaskLoader<ArrayList<Movie>>(this) {
-
             /* This String array will hold and help cache our movies data */
             ArrayList<Movie> mMoviesList;
 

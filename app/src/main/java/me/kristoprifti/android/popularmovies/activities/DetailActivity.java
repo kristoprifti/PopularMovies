@@ -20,8 +20,6 @@ public class DetailActivity extends AppCompatActivity {
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovieApp";
 
     private Movie mMovie;
-    private TextView mMovieFulltitleTextView;
-    private ImageView mMovieBackdropImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +28,11 @@ public class DetailActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        mMovieFulltitleTextView = (TextView) findViewById(R.id.tv_display_movie);
-        mMovieBackdropImageView = (ImageView) findViewById(R.id.iv_movie_backdrop);
+        if(getSupportActionBar() != null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        TextView mMovieFulltitleTextView = (TextView) findViewById(R.id.tv_display_movie);
+        ImageView mMovieBackdropImageView = (ImageView) findViewById(R.id.iv_movie_backdrop);
 
         Intent intent = getIntent();
 
@@ -68,10 +69,5 @@ public class DetailActivity extends AppCompatActivity {
         MenuItem menuItem = menu.findItem(R.id.action_share);
         menuItem.setIntent(createShareForecastIntent());
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        return super.onOptionsItemSelected(item);
     }
 }
