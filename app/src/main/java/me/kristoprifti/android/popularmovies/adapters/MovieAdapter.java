@@ -42,7 +42,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      * The interface that receives onClick messages.
      */
     public interface MovieAdapterOnClickHandler {
-        void onClick(Movie selectedMovie);
+        void onClick(Movie selectedMovie, View view);
     }
 
     /**
@@ -79,13 +79,13 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         /**
          * This gets called by the child views during a click.
          *
-         * @param v The View that was clicked
+         * @param view The View that was clicked
          */
         @Override
-        public void onClick(View v) {
+        public void onClick(View view) {
             int adapterPosition = getAdapterPosition();
             Movie currentMovie = mMoviesList.get(adapterPosition);
-            mClickHandler.onClick(currentMovie);
+            mClickHandler.onClick(currentMovie, view);
         }
     }
 

@@ -254,7 +254,7 @@ public class MainActivity extends AppCompatActivity implements
      * @param selectedMovie String describing movie details for a particular movie
      */
     @Override
-    public void onClick(Movie selectedMovie) {
+    public void onClick(Movie selectedMovie, View view) {
         Context context = this;
         Class destinationClass = DetailActivity.class;
         Intent intentToStartDetailActivity = new Intent(context, destinationClass);

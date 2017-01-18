@@ -31,9 +31,15 @@ public class DetailActivity extends AppCompatActivity {
         if(getSupportActionBar() != null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        TextView mMovieFulltitleTextView = (TextView) findViewById(R.id.tv_display_movie);
+        TextView mMovieFulltitleTextView = (TextView) findViewById(R.id.tv_movie_full_title);
+        TextView mMovieReleaseDateTextView = (TextView) findViewById(R.id.tv_movie_release_date);
+        TextView mMovieOriginalLanguageTextView = (TextView) findViewById(R.id.tv_movie_languge);
+        TextView mMoviePopularityTextView = (TextView) findViewById(R.id.tv_movie_popularity);
+        TextView mMovieVotesTextView = (TextView) findViewById(R.id.tv_movie_votes);
+        TextView mMovieRatingTextView = (TextView) findViewById(R.id.tv_movie_rating);
+        TextView mMovieOverviewTextView = (TextView) findViewById(R.id.tv_movie_overview);
         ImageView mMovieBackdropImageView = (ImageView) findViewById(R.id.iv_movie_backdrop);
-
+        ImageView mMoviePosterImageView = (ImageView) findViewById(R.id.iv_movie_poster);
         Intent intent = getIntent();
 
         if (intent != null) {
@@ -44,7 +50,14 @@ public class DetailActivity extends AppCompatActivity {
                     getSupportActionBar().setTitle(mMovie.getOriginalTitle());
 
                 mMovieFulltitleTextView.setText(mMovie.getOriginalTitle());
+                mMovieReleaseDateTextView.append(mMovie.getReleaseDate());
+                mMovieOriginalLanguageTextView.append(mMovie.getOriginalLanguage());
+                mMoviePopularityTextView.append(String.valueOf(mMovie.getPopularity()));
+                mMovieVotesTextView.append(String.valueOf(mMovie.getVoteCount()));
+                mMovieRatingTextView.append(String.valueOf(mMovie.getRating()) + getString(R.string.out_of_ten));
+                mMovieOverviewTextView.setText(mMovie.getOverview());
                 Picasso.with(this).load(mMovie.getBackdropPath()).into(mMovieBackdropImageView);
+                Picasso.with(this).load(mMovie.getPosterPath()).into(mMoviePosterImageView);
             }
         }
     }

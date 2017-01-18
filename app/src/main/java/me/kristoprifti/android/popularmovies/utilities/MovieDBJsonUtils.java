@@ -36,6 +36,9 @@ public class MovieDBJsonUtils {
         final String MOVIES_OVERVIEW = "overview";
         final String MOVIES_RELEASE_DATE = "release_date";
         final String MOVIES_RATING = "vote_average";
+        final String MOVIES_ORIGINAL_LANGUAGE = "original_language";
+        final String MOVIES_VOTE_COUNT = "vote_count";
+        final String MOVIES_POPULARITY = "popularity";
 
         /* String array to hold each day's weather String */
         ArrayList<Movie> parsedMovieData;
@@ -62,10 +65,14 @@ public class MovieDBJsonUtils {
             String backdropPathString = NetworkUtils.buildPictureUrl(currentMovieJSON.getString(MOVIES_BACKDROP_PATH));
             String releaseDateString = currentMovieJSON.getString(MOVIES_RELEASE_DATE);
             float ratingValue = (float) currentMovieJSON.getDouble(MOVIES_RATING);
+            int voteCount = currentMovieJSON.getInt(MOVIES_VOTE_COUNT);
+            double popularity = currentMovieJSON.getDouble(MOVIES_POPULARITY);
+            String originalLanguage = currentMovieJSON.getString(MOVIES_ORIGINAL_LANGUAGE);
 
             /*Create a new Movie object with all the fields retrieved*/
             Movie newMovie = new Movie(originalTitleString, posterPathString, backdropPathString,
-                                        overviewString, releaseDateString, ratingValue);
+                                        overviewString, releaseDateString, ratingValue,
+                                        originalLanguage, voteCount, popularity);
 
             /*Add the newly created Movie object to the arrayList in order to be returned to the adapter*/
             parsedMovieData.add(newMovie);

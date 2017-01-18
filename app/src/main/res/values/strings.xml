@@ -30,9 +30,20 @@
 
     <!-- Value in SharedPreferences for top rated ordering option [CHAR LIMIT=NONE] -->
     <string name="pref_orderby_top_rated" translatable="false">top_rated</string>
+
+
     <string name="no_internet">No internet connection!</string>
     <string name="action_retry">Retry</string>
     <string name="poster_content_description">Poster of the movie</string>
-    <string name="out_of_ten">/10</string>
+    <string name="out_of_ten" translatable="false">/10</string>
     <string name="backdrop_content_description">Backdrop Image of the movie</string>
+    <string name="released_date_label">Released date:</string>
+    <string name="language_label">Language:</string>
+    <string name="popularity_label">Popularity:</string>
+    <string name="votes_label">Votes:</string>
+    <string name="rating_label">Rating:</string>
+    <string name="overview_label">Overview</string>
+
+    <string name="poster_transition" translatable="false">posterTransition</string>
+    <string name="title_transition" translatable="false">titleTransition</string>
 </resources>

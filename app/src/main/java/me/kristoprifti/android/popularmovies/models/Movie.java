@@ -15,15 +15,22 @@ public class Movie implements Parcelable{
     private String overview;
     private String releaseDate;
     private float rating;
+    private String originalLanguage;
+    private int voteCount;
+    private double popularity;
 
     public Movie(String vOriginalTitle, String vPosterPath, String vBackdropPath,
-                 String vOverview, String vReleaseDate, float vRating){
+                 String vOverview, String vReleaseDate, float vRating,
+                 String vOriginalLanguage, int vVoteCount, double vPopularity){
         this.originalTitle = vOriginalTitle;
         this.posterPath = vPosterPath;
         this.backdropPath = vBackdropPath;
         this.overview = vOverview;
         this.releaseDate = vReleaseDate;
         this.rating = vRating;
+        this.originalLanguage = vOriginalLanguage;
+        this.voteCount = vVoteCount;
+        this.popularity = vPopularity;
     }
 
     private Movie(Parcel in){
@@ -33,6 +40,9 @@ public class Movie implements Parcelable{
         overview = in.readString();
         releaseDate = in.readString();
         rating = in.readFloat();
+        originalLanguage = in.readString();
+        voteCount = in.readInt();
+        popularity = in.readDouble();
     }
 
     @Override
@@ -50,6 +60,9 @@ public class Movie implements Parcelable{
         parcel.writeString(overview);
         parcel.writeString(releaseDate);
         parcel.writeFloat(rating);
+        parcel.writeString(originalLanguage);
+        parcel.writeInt(voteCount);
+        parcel.writeDouble(popularity);
     }
 
     public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
@@ -86,5 +99,17 @@ public class Movie implements Parcelable{
 
     public float getRating() {
         return rating;
+    }
+
+    public String getOriginalLanguage() {
+        return originalLanguage;
+    }
+
+    public int getVoteCount() {
+        return voteCount;
+    }
+
+    public double getPopularity() {
+        return popularity;
     }
 }
