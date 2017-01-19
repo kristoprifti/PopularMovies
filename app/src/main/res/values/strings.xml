@@ -43,7 +43,8 @@
     <string name="votes_label">Votes:</string>
     <string name="rating_label">Rating:</string>
     <string name="overview_label">Overview</string>
-    <string name="movies_key">movies</string>
+    <string name="movies_key" translatable="false">movies</string>
+    <string name="scroll_position" translatable="false">scroll_position</string>
     <string name="poster_transition" translatable="false">posterTransition</string>
     <string name="title_transition" translatable="false">titleTransition</string>
     <string name="hashTag">#</string>

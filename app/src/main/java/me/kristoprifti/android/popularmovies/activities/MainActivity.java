@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: starts");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -120,11 +121,8 @@ public class MainActivity extends AppCompatActivity implements
          */
         mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
 
-        //check if the array list is saved in the instance state and if it is, assign it to the arraylist variable
-        if(savedInstanceState != null && savedInstanceState.containsKey(getString(R.string.movies_key))) {
+        if(savedInstanceState != null && savedInstanceState.containsKey(getString(R.string.movies_key)))
             mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
-        }
-
         /*
          * initializing the loader
          */
@@ -137,12 +135,17 @@ public class MainActivity extends AppCompatActivity implements
          */
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
+
+        Log.d(TAG, "onCreate: ends");
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        Log.d(TAG, "onSaveInstanceState: starts");
         outState.putParcelableArrayList(getString(R.string.movies_key), mMoviesList);
+        outState.putParcelable(getString(R.string.scroll_position), mRecyclerView.getLayoutManager().onSaveInstanceState());
         super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState: ends");
     }
 
     /**
@@ -163,8 +166,10 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             protected void onStartLoading() {
                 if (mMoviesList != null) {
+                    Log.d(TAG, "onStartLoading: list exists");
                     deliverResult(mMoviesList);
                 } else {
+                    Log.d(TAG, "onStartLoading: list doesnt exits");
                     mLoadingIndicator.setVisibility(View.VISIBLE);
                     forceLoad();
                 }
