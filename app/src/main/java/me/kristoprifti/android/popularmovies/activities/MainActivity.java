@@ -1,5 +1,6 @@
 package me.kristoprifti.android.popularmovies.activities;
 
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -58,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements
 
     private FrameLayout mainView;
 
+    /* This ArrayList will hold and help cache our movies data */
+    private ArrayList<Movie> mMoviesList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,8 +70,7 @@ public class MainActivity extends AppCompatActivity implements
         setSupportActionBar(toolbar);
 
         /*
-         * Using findViewById, we get a reference to our RecyclerView from xml. This allows us to
-         * do things like set the adapter of the RecyclerView and toggle the visibility.
+         * Reference to the recycler view in the layout file
          */
         mRecyclerView = (RecyclerView) findViewById(R.id.rv_movies);
         mainView = (FrameLayout) findViewById(R.id.mainView);
@@ -84,12 +87,7 @@ public class MainActivity extends AppCompatActivity implements
          */
         int recyclerViewOrientation = GridLayoutManager.VERTICAL;
 
-        /*
-         *  This value should be true if you want to reverse your layout. Generally, this is only
-         *  true with horizontal lists that need to support a right-to-left layout.
-         */
         GridLayoutManager layoutManager;
-
         /*
          * check if the device is landscape or portrait mode
          * if its portrait show 2 columns if its landscape show 4
@@ -100,51 +98,55 @@ public class MainActivity extends AppCompatActivity implements
             layoutManager = new GridLayoutManager(this, 2, recyclerViewOrientation, false);
         }
 
+        //apply this layout manager to the recyclerview
         mRecyclerView.setLayoutManager(layoutManager);
 
         /*
-         * Use this setting to improve performance if you know that changes in content do not
-         * change the child layout size in the RecyclerView
+         * fixed size property set to true improves performance of recyclerview
          */
         mRecyclerView.setHasFixedSize(true);
 
         /*
-         * The MovieAdapter is responsible for linking our weather data with the Views that
-         * will end up displaying our weather data.
+         * The MovieAdapter is responsible for linking our movie data with the Views that
+         * will end up displaying our movie data.
          */
         mMovieAdapter = new MovieAdapter(this);
 
-        /* Setting the adapter attaches it to the RecyclerView in our layout. */
+        /* attaching the adapter to the recyclerview */
         mRecyclerView.setAdapter(mMovieAdapter);
 
         /*
-         * The ProgressBar that will indicate to the user that we are loading data. It will be
-         * hidden when no data is loading.
-         *
-         * Please note: This so called "ProgressBar" isn't a bar by default. It is more of a
-         * circle. We didn't make the rules (or the names of Views), we just follow them.
+         * getting reference of the loading indicator in the layout file
          */
         mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
 
+        //check if the array list is saved in the instance state and if it is, assign it to the arraylist variable
+        if(savedInstanceState != null && savedInstanceState.containsKey(getString(R.string.movies_key))) {
+            mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
+        }
+
         /*
-         * Ensures a loader is initialized and active. If the loader doesn't already exist, one is
-         * created and (if the activity/fragment is currently started) starts the loader. Otherwise
-         * the last created loader is re-used.
+         * initializing the loader
          */
         initLoader();
 
-        Log.d(TAG, "onCreate: registering preference changed listener");
+        Log.d(TAG, "onCreate: registering on preference changed listener");
         /*
          * Register MainActivity as an OnPreferenceChangedListener to receive a callback when a
-         * SharedPreference has changed. Please note that we must unregister MainActivity as an
-         * OnSharedPreferenceChanged listener in onDestroy to avoid any memory leaks.
+         * SharedPreference has changed.
          */
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(getString(R.string.movies_key), mMoviesList);
+        super.onSaveInstanceState(outState);
+    }
+
     /**
-     * Instantiate and return a new Loader for the given ID.
+     * Instantiate and return a new Loader the specific Loader ID.
      *
      * @param id The ID whose loader is to be created.
      * @param loaderArgs Any arguments supplied by the caller.
@@ -155,9 +157,6 @@ public class MainActivity extends AppCompatActivity implements
     public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle loaderArgs) {
 
         return new AsyncTaskLoader<ArrayList<Movie>>(this) {
-            /* This String array will hold and help cache our movies data */
-            ArrayList<Movie> mMoviesList;
-
             /**
              * Subclasses of AsyncTaskLoader must implement this to take care of loading their data.
              */
@@ -175,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements
              * This is the method of the AsyncTaskLoader that will load and parse the JSON data
              * from TheMovieDB in the background.
              *
-             * @return Movie data from TheMovieDB as an array of Strings.
+             * @return Movie data from TheMovieDB as an ArrayList of Movie objects.
              *         null if an error occurs
              */
             @Override
@@ -226,18 +225,13 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * Called when a previously created loader is being reset, and thus
-     * making its data unavailable.  The application should at this point
-     * remove any references it has to the Loader's data.
+     * Called when a previously created loader is being reset
      *
      * @param loader The Loader that is being reset.
      */
     @Override
     public void onLoaderReset(Loader<ArrayList<Movie>> loader) {
-        /*
-         * We aren't using this method in our example application, but we are required to Override
-         * it to implement the LoaderCallbacks<String> interface
-         */
+
     }
 
     /**
@@ -251,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * This method is for responding to clicks from our list.
      *
-     * @param selectedMovie String describing movie details for a particular movie
+     * @param selectedMovie object representing movie details for a particular movie
      */
     @Override
     public void onClick(Movie selectedMovie, View view) {
@@ -259,15 +253,19 @@ public class MainActivity extends AppCompatActivity implements
         Class destinationClass = DetailActivity.class;
         Intent intentToStartDetailActivity = new Intent(context, destinationClass);
         intentToStartDetailActivity.putExtra(Intent.EXTRA_TEXT, selectedMovie);
-        startActivity(intentToStartDetailActivity);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(this, view.findViewById(R.id.iv_movie_poster), String.valueOf(R.string.poster_transition)).toBundle();
+                startActivity(intentToStartDetailActivity, bundle);
+            }
+        } else {
+            startActivity(intentToStartDetailActivity);
+        }
     }
 
     /**
      * This method will make the View for the movie data visible and
      * hide the error message.
-     * <p>
-     * Since it is okay to redundantly set the visibility of a View, we don't
-     * need to check whether each view is currently visible or invisible.
      */
     private void showMovieDataView() {
         /* First, make sure the error is invisible */
@@ -279,9 +277,6 @@ public class MainActivity extends AppCompatActivity implements
     /**
      * This method will make the error message visible and hide the movie
      * View.
-     * <p>
-     * Since it is okay to redundantly set the visibility of a View, we don't
-     * need to check whether each view is currently visible or invisible.
      */
     private void showErrorMessage() {
         /* First, hide the currently visible data */
@@ -291,11 +286,8 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * OnStart is called when the Activity is coming into view. This happens when the Activity is
-     * first created, but also happens when the Activity is returned to from another Activity. We
-     * are going to use the fact that onStart is called when the user returns to this Activity to
-     * check if the location setting or the preferred units setting has changed. If it has changed,
-     * we are going to perform a new query.
+     * OnStart is called when the Activity is coming into view.
+     * if preferences have been changed we will initialize the loader again
      */
     @Override
     protected void onStart() {

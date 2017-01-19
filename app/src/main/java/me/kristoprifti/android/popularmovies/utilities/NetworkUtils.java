@@ -64,7 +64,7 @@ public class NetworkUtils {
      * @param picturePath The path that will be added to the static URL.
      * @return The URL to use to load into the imageview
      */
-    public static String buildPictureUrl(String picturePath){
+    static String buildPictureUrl(String picturePath){
         StringBuilder fullPicturePath = new StringBuilder(STATIC_PICTURE_URL);
 
         DisplayMetrics metrics = Resources.getSystem().getDisplayMetrics();

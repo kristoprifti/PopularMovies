@@ -15,7 +15,6 @@ public class MovieDBJsonUtils {
     /**
      * This method parses JSON from a web response and returns an ArrayList of Movie objects
      * describing either the most popular movies or the top rated ones.
-     * <p/>
      *
      * @param movieJsonStr JSON response from server
      *
@@ -39,6 +38,7 @@ public class MovieDBJsonUtils {
         final String MOVIES_ORIGINAL_LANGUAGE = "original_language";
         final String MOVIES_VOTE_COUNT = "vote_count";
         final String MOVIES_POPULARITY = "popularity";
+        final String MOVIES_ID = "id";
 
         /* String array to hold each day's weather String */
         ArrayList<Movie> parsedMovieData;
@@ -68,11 +68,12 @@ public class MovieDBJsonUtils {
             int voteCount = currentMovieJSON.getInt(MOVIES_VOTE_COUNT);
             double popularity = currentMovieJSON.getDouble(MOVIES_POPULARITY);
             String originalLanguage = currentMovieJSON.getString(MOVIES_ORIGINAL_LANGUAGE);
+            int movieId = currentMovieJSON.getInt(MOVIES_ID);
 
             /*Create a new Movie object with all the fields retrieved*/
             Movie newMovie = new Movie(originalTitleString, posterPathString, backdropPathString,
                                         overviewString, releaseDateString, ratingValue,
-                                        originalLanguage, voteCount, popularity);
+                                        originalLanguage, voteCount, popularity, movieId);
 
             /*Add the newly created Movie object to the arrayList in order to be returned to the adapter*/
             parsedMovieData.add(newMovie);

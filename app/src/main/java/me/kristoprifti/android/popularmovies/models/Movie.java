@@ -4,11 +4,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Created by k.prifti on 16.1.2017 г..
+ * this class is a model for the Movie objects to hold all the information for each movie
  */
 
 public class Movie implements Parcelable{
 
+    //declaration of variables that will be properties for each movie objects
     private String originalTitle;
     private String posterPath;
     private String backdropPath;
@@ -18,10 +19,12 @@ public class Movie implements Parcelable{
     private String originalLanguage;
     private int voteCount;
     private double popularity;
+    private int movieId;
 
+    //constructor creating a movie object
     public Movie(String vOriginalTitle, String vPosterPath, String vBackdropPath,
                  String vOverview, String vReleaseDate, float vRating,
-                 String vOriginalLanguage, int vVoteCount, double vPopularity){
+                 String vOriginalLanguage, int vVoteCount, double vPopularity, int vMovieId){
         this.originalTitle = vOriginalTitle;
         this.posterPath = vPosterPath;
         this.backdropPath = vBackdropPath;
@@ -31,6 +34,7 @@ public class Movie implements Parcelable{
         this.originalLanguage = vOriginalLanguage;
         this.voteCount = vVoteCount;
         this.popularity = vPopularity;
+        this.movieId = vMovieId;
     }
 
     private Movie(Parcel in){
@@ -43,6 +47,7 @@ public class Movie implements Parcelable{
         originalLanguage = in.readString();
         voteCount = in.readInt();
         popularity = in.readDouble();
+        movieId = in.readInt();
     }
 
     @Override
@@ -63,6 +68,7 @@ public class Movie implements Parcelable{
         parcel.writeString(originalLanguage);
         parcel.writeInt(voteCount);
         parcel.writeDouble(popularity);
+        parcel.writeInt(movieId);
     }
 
     public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {
@@ -77,6 +83,7 @@ public class Movie implements Parcelable{
         }
     };
 
+    //getters for each variable to be able to access specific properties when we need to
     public String getOriginalTitle() {
         return originalTitle;
     }
@@ -111,5 +118,9 @@ public class Movie implements Parcelable{
 
     public double getPopularity() {
         return popularity;
+    }
+
+    public int getMovieId() {
+        return movieId;
     }
 }

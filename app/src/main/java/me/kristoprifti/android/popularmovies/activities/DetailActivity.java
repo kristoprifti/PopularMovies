@@ -63,16 +63,14 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Uses the ShareCompat Intent builder to create our Movie intent for sharing. We set the
-     * type of content that we are sharing (just regular text), the text itself, and we return the
-     * newly created Intent.
+     * ShareCompat is used to create an intent for sharing the title of one movie
      *
      * @return The Intent to use to start our share.
      */
     private Intent createShareForecastIntent() {
         return ShareCompat.IntentBuilder.from(this)
                 .setType("text/plain")
-                .setText(mMovie.getOriginalTitle() + MOVIE_SHARE_HASHTAG)
+                .setText(MOVIE_SHARE_HASHTAG + getString(R.string.hashTag) + mMovie.getOriginalTitle())
                 .getIntent();
     }
 
