@@ -2,6 +2,11 @@ package me.kristoprifti.android.popularmovies.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
@@ -20,6 +26,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.models.Movie;
 
@@ -31,6 +39,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
 
     private ArrayList<Movie> mMoviesList;
     private Context mContext;
+    private int[] colorFromPalette;
 
     /*
      * An on-click handler that we've defined to make it easy for an Activity to interface with
@@ -42,7 +51,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      * The interface that receives onClick messages.
      */
     public interface MovieAdapterOnClickHandler {
-        void onClick(Movie selectedMovie, View view);
+        void onClick(Movie selectedMovie, View view, int colorPalette);
     }
 
     /**
@@ -59,20 +68,15 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      * Cache of the children views for a forecast list item.
      */
     class MovieAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private TextView mMovieTitleTextView;
-        private TextView mMovieReleaseDateTextView;
-        private TextView mMovieRatingTextView;
-        private RatingBar mMovieRatingBar;
-        private ImageView mMoviePosterImageView;
+        @BindView(R.id.tv_movie_full_title) TextView mMovieTitleTextView;
+        @BindView(R.id.tv_movie_release_date) TextView mMovieReleaseDateTextView;
+        @BindView(R.id.tv_movie_rating_value) TextView mMovieRatingTextView;
+        @BindView(R.id.rb_movie_rating) RatingBar mMovieRatingBar;
+        @BindView(R.id.iv_movie_poster) ImageView mMoviePosterImageView;
 
         MovieAdapterViewHolder(View view) {
             super(view);
-            mMovieTitleTextView = (TextView) view.findViewById(R.id.tv_movie_full_title);
-            mMovieReleaseDateTextView = (TextView) view.findViewById(R.id.tv_movie_release_date);
-            mMovieRatingTextView = (TextView) view.findViewById(R.id.tv_movie_rating_value);
-            mMovieRatingBar = (RatingBar) view.findViewById(R.id.rb_movie_rating);
-            mMoviePosterImageView = (ImageView) view.findViewById(R.id.iv_movie_poster);
-
+            ButterKnife.bind(this, view);
             view.setOnClickListener(this);
         }
 
@@ -85,7 +89,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         public void onClick(View view) {
             int adapterPosition = getAdapterPosition();
             Movie currentMovie = mMoviesList.get(adapterPosition);
-            mClickHandler.onClick(currentMovie, view);
+            mClickHandler.onClick(currentMovie, view, colorFromPalette[adapterPosition]);
         }
     }
 
@@ -118,7 +122,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      */
     @SuppressLint("SetTextI18n")
     @Override
-    public void onBindViewHolder(MovieAdapterViewHolder movieAdapterViewHolder, int position) {
+    public void onBindViewHolder(final MovieAdapterViewHolder movieAdapterViewHolder, @SuppressLint("RecyclerView") final int position) {
         movieAdapterViewHolder.mMovieTitleTextView.setText(mMoviesList.get(position).getOriginalTitle());
         movieAdapterViewHolder.mMovieRatingBar.setRating(mMoviesList.get(position).getRating() / 2);
         movieAdapterViewHolder.mMovieRatingTextView.setText(mMoviesList.get(position).getRating() + mContext.getString(R.string.out_of_ten));
@@ -126,7 +130,28 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
         int releaseYear = getYearFromDate(mMoviesList.get(position).getReleaseDate());
         if(releaseYear != 0)
             movieAdapterViewHolder.mMovieReleaseDateTextView.setText(Integer.toString(releaseYear));
-        Picasso.with(mContext).load(mMoviesList.get(position).getPosterPath()).into(movieAdapterViewHolder.mMoviePosterImageView);
+
+        Picasso.with(mContext).load(mMoviesList.get(position).getPosterPath()).into(movieAdapterViewHolder.mMoviePosterImageView, new Callback() {
+            @Override
+            public void onSuccess() {
+                BitmapDrawable drawable = (BitmapDrawable) movieAdapterViewHolder.mMoviePosterImageView.getDrawable();
+                Bitmap bitmap = drawable.getBitmap();
+                Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+                    @Override
+                    public void onGenerated(Palette palette) {
+                        //work with the palette here
+                        if(palette.getVibrantSwatch() != null)
+                            colorFromPalette[position] = palette.getVibrantSwatch().getRgb();
+                    }
+                });
+            }
+
+            @Override
+            public void onError() {
+                colorFromPalette[position] = 0;
+            }
+        });
     }
 
     /**
@@ -147,6 +172,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
      */
     public void setMoviesList(ArrayList<Movie> moviesList) {
         mMoviesList = moviesList;
+        if(moviesList != null)
+            colorFromPalette = new int[moviesList.size()];
         notifyDataSetChanged();
     }
 

@@ -39,8 +39,9 @@
                 android:maxLines="1"
                 android:padding="10dp"
                 android:textColor="@color/colorPrimaryText"
-                android:textSize="18sp"
-                tools:targetApi="lollipop"/>
+                android:textSize="@dimen/large_dimension_text"
+                tools:targetApi="lollipop"
+                tools:text="Test Title"/>
 
             <TextView
                 android:id="@+id/tv_movie_release_date"
@@ -49,7 +50,8 @@
                 android:paddingLeft="10dp"
                 android:paddingRight="10dp"
                 android:textColor="@color/colorSecondaryText"
-                android:textSize="16sp" />
+                android:textSize="@dimen/header_size_text"
+                tools:text="Test Title" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -71,8 +73,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="16sp"
-                    android:layout_gravity="center_vertical"/>
+                    android:textSize="@dimen/header_size_text"
+                    android:layout_gravity="center_vertical"
+                    tools:text="Test Title"/>
 
             </LinearLayout>
 

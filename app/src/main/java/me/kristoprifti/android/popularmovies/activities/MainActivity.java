@@ -1,6 +1,5 @@
 package me.kristoprifti.android.popularmovies.activities;
 
-import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,6 +31,8 @@ import android.widget.TextView;
 import java.net.URL;
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.adapters.MovieAdapter;
 import me.kristoprifti.android.popularmovies.data.PopularMoviesPreferences;
@@ -45,19 +46,16 @@ public class MainActivity extends AppCompatActivity implements
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-
-    private RecyclerView mRecyclerView;
     private MovieAdapter mMovieAdapter;
 
-    private TextView mErrorMessageDisplay;
-
-    private ProgressBar mLoadingIndicator;
+    @BindView(R.id.rv_movies) RecyclerView mRecyclerView;
+    @BindView(R.id.tv_error_message_display) TextView mErrorMessageDisplay;
+    @BindView(R.id.pb_loading_indicator) ProgressBar mLoadingIndicator;
+    @BindView(R.id.mainView) FrameLayout mainView;
+    @BindView(R.id.toolbar) Toolbar toolbar;
 
     private static final int MOVIE_LOADER_ID = 0;
-
     private static boolean PREFERENCES_HAVE_BEEN_UPDATED = false;
-
-    private FrameLayout mainView;
 
     /* This ArrayList will hold and help cache our movies data */
     private ArrayList<Movie> mMoviesList;
@@ -67,17 +65,8 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onCreate: starts");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-
-        /*
-         * Reference to the recycler view in the layout file
-         */
-        mRecyclerView = (RecyclerView) findViewById(R.id.rv_movies);
-        mainView = (FrameLayout) findViewById(R.id.mainView);
-
-        /* This TextView is used to display errors and will be hidden if there are no errors */
-        mErrorMessageDisplay = (TextView) findViewById(R.id.tv_error_message_display);
 
         /*
          * A GridLayoutManager is responsible for measuring and positioning item views within a
@@ -87,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements
          * GridLayoutManager class for vertical lists, GridLayoutManager.VERTICAL.
          */
         int recyclerViewOrientation = GridLayoutManager.VERTICAL;
-
         GridLayoutManager layoutManager;
         /*
          * check if the device is landscape or portrait mode
@@ -116,17 +104,18 @@ public class MainActivity extends AppCompatActivity implements
         /* attaching the adapter to the recyclerview */
         mRecyclerView.setAdapter(mMovieAdapter);
 
-        /*
-         * getting reference of the loading indicator in the layout file
-         */
-        mLoadingIndicator = (ProgressBar) findViewById(R.id.pb_loading_indicator);
-
-        if(savedInstanceState != null && savedInstanceState.containsKey(getString(R.string.movies_key)))
+        if(savedInstanceState != null && savedInstanceState.containsKey(getString(R.string.movies_key))) {
             mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
+        }
+
         /*
          * initializing the loader
          */
-        initLoader();
+        if(mMoviesList == null) {
+            initLoader();
+        } else {
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+        }
 
         Log.d(TAG, "onCreate: registering on preference changed listener");
         /*
@@ -143,7 +132,6 @@ public class MainActivity extends AppCompatActivity implements
     public void onSaveInstanceState(Bundle outState) {
         Log.d(TAG, "onSaveInstanceState: starts");
         outState.putParcelableArrayList(getString(R.string.movies_key), mMoviesList);
-        outState.putParcelable(getString(R.string.scroll_position), mRecyclerView.getLayoutManager().onSaveInstanceState());
         super.onSaveInstanceState(outState);
         Log.d(TAG, "onSaveInstanceState: ends");
     }
@@ -158,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle loaderArgs) {
-
+        Log.d(TAG, "onCreateLoader: starts");
         return new AsyncTaskLoader<ArrayList<Movie>>(this) {
             /**
              * Subclasses of AsyncTaskLoader must implement this to take care of loading their data.
@@ -184,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements
              */
             @Override
             public ArrayList<Movie> loadInBackground() {
+                Log.d(TAG, "loadInBackground: starts");
                 String orderByPreference = PopularMoviesPreferences
                         .getPreferredSortType(MainActivity.this);
 
@@ -206,8 +195,10 @@ public class MainActivity extends AppCompatActivity implements
              * @param data The result of the load
              */
             public void deliverResult(ArrayList<Movie> data) {
+                Log.d(TAG, "deliverResult: starts");
                 mMoviesList = data;
                 super.deliverResult(data);
+                Log.d(TAG, "deliverResult: ends");
             }
         };
     }
@@ -220,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> data) {
+        Log.d(TAG, "onLoadFinished: starts");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mMovieAdapter.setMoviesList(data);
         if (null == data) {
@@ -227,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements
         } else {
             showMovieDataView();
         }
+        Log.d(TAG, "onLoadFinished: ends");
     }
 
     /**
@@ -244,7 +237,10 @@ public class MainActivity extends AppCompatActivity implements
      * refresh of our data, you can see that there is no data showing.
      */
     private void invalidateData() {
+        Log.d(TAG, "invalidateData: starts");
+        mMoviesList = null;
         mMovieAdapter.setMoviesList(null);
+        Log.d(TAG, "invalidateData: ends");
     }
 
     /**
@@ -253,19 +249,13 @@ public class MainActivity extends AppCompatActivity implements
      * @param selectedMovie object representing movie details for a particular movie
      */
     @Override
-    public void onClick(Movie selectedMovie, View view) {
+    public void onClick(Movie selectedMovie, View view, int colorPalette) {
         Context context = this;
         Class destinationClass = DetailActivity.class;
         Intent intentToStartDetailActivity = new Intent(context, destinationClass);
-        intentToStartDetailActivity.putExtra(Intent.EXTRA_TEXT, selectedMovie);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN) {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                Bundle bundle = ActivityOptions.makeSceneTransitionAnimation(this, view.findViewById(R.id.iv_movie_poster), String.valueOf(R.string.poster_transition)).toBundle();
-                startActivity(intentToStartDetailActivity, bundle);
-            }
-        } else {
-            startActivity(intentToStartDetailActivity);
-        }
+        intentToStartDetailActivity.putExtra(getString(R.string.intent_movie_object), selectedMovie);
+        intentToStartDetailActivity.putExtra(getString(R.string.intent_color_integer), colorPalette);
+        startActivity(intentToStartDetailActivity);
     }
 
     /**
@@ -273,10 +263,12 @@ public class MainActivity extends AppCompatActivity implements
      * hide the error message.
      */
     private void showMovieDataView() {
+        Log.d(TAG, "showMovieDataView: starts");
         /* First, make sure the error is invisible */
         mErrorMessageDisplay.setVisibility(View.INVISIBLE);
         /* Then, make sure the weather data is visible */
         mRecyclerView.setVisibility(View.VISIBLE);
+        Log.d(TAG, "showMovieDataView: ends");
     }
 
     /**
@@ -284,10 +276,12 @@ public class MainActivity extends AppCompatActivity implements
      * View.
      */
     private void showErrorMessage() {
+        Log.d(TAG, "showErrorMessage: starts");
         /* First, hide the currently visible data */
         mRecyclerView.setVisibility(View.INVISIBLE);
         /* Then, show the error */
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
+        Log.d(TAG, "showErrorMessage: ends");
     }
 
     /**
@@ -304,7 +298,8 @@ public class MainActivity extends AppCompatActivity implements
          */
         if (PREFERENCES_HAVE_BEEN_UPDATED) {
             Log.d(TAG, "onStart: preferences were updated");
-            initLoader();
+            invalidateData();
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
             PREFERENCES_HAVE_BEEN_UPDATED = false;
         }
     }
@@ -334,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements
 
         if (id == R.id.action_refresh) {
             invalidateData();
-            initLoader();
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
             return true;
         }
 
@@ -362,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         if (netInfo != null && netInfo.isConnectedOrConnecting()){
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+            getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
         } else {
             Snackbar snackbar = Snackbar
                     .make(mainView, R.string.no_internet, Snackbar.LENGTH_INDEFINITE)

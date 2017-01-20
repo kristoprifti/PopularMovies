@@ -1,4 +1,7 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="toolbar_elevation">4dp</dimen>
+    <dimen name="header_size_text">16sp</dimen>
+    <dimen name="large_dimension_text">18sp</dimen>
+    <dimen name="error_size_text">20sp</dimen>
 </resources>

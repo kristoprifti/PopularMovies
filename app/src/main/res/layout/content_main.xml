@@ -25,8 +25,9 @@
             android:layout_height="wrap_content"
             android:padding="16dp"
             android:text="@string/error_message"
-            android:textSize="20sp"
-            android:visibility="invisible" />
+            android:textSize="@dimen/error_size_text"
+            android:visibility="invisible"
+            tools:text="Test Title" />
 
         <ProgressBar
             android:id="@+id/pb_loading_indicator"

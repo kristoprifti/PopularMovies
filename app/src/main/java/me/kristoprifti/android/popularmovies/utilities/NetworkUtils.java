@@ -5,28 +5,30 @@ import android.net.Uri;
 import android.util.DisplayMetrics;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Scanner;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * These utilities will be used to communicate with TheMovieDB servers.
  */
 public class NetworkUtils {
 
-    private static final String TAG = NetworkUtils.class.getSimpleName();
-
     private static final String STATIC_MOVIE_URL =
             "http://api.themoviedb.org/3/movie";
 
     private static final String STATIC_PICTURE_URL =
             "http://image.tmdb.org/t/p/";
-    private static final String STATIC_PICTURE_TABLET_SIZE = "w500";
-    private static final String STATIC_PICTURE_PHONE_SIZE = "w185";
 
-    private static final String FORECAST_BASE_URL = STATIC_MOVIE_URL;
+    private static final String STATIC_PICTURE_PHONE_SMALL_SIZE = "w185";
+    private static final String STATIC_PICTURE_PHONE_MEDIUM_SIZE = "w342";
+    private static final String STATIC_PICTURE_PHONE_LARGE_SIZE = "w500";
+    private static final String STATIC_PICTURE_TABLET_SIZE = "w780";
+
+    private static final String MOVIE_BASE_URL = STATIC_MOVIE_URL;
 
     /*
      * NOTE: These values only effect responses from TheMovieDB. They are simply here to allow us to
@@ -43,7 +45,7 @@ public class NetworkUtils {
      * @return The URL to use to query the movie server.
      */
     public static URL buildUrl(String orderBy) {
-        Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+        Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                 .appendPath(orderBy)
                 .appendQueryParameter(API_KEY_PARAM, API_KEY)
                 .build();
@@ -74,10 +76,17 @@ public class NetworkUtils {
         if (diagonalInches>=6.5){
             // 6.5inch device or bigger
             fullPicturePath.append(STATIC_PICTURE_TABLET_SIZE);
-        }else{
-            // smaller device
-            fullPicturePath.append(STATIC_PICTURE_PHONE_SIZE);
+        }else if (diagonalInches >= 5.5){
+            // between 6.5 and 5.5 inch devices
+            fullPicturePath.append(STATIC_PICTURE_PHONE_LARGE_SIZE);
+        } else if (diagonalInches >= 4.5){
+            // between 5.5 and 4.5 inch devices
+            fullPicturePath.append(STATIC_PICTURE_PHONE_MEDIUM_SIZE);
+        } else {
+            // below 4.5 inch devices
+            fullPicturePath.append(STATIC_PICTURE_PHONE_SMALL_SIZE);
         }
+
         fullPicturePath.append(picturePath);
 
         return fullPicturePath.toString();
@@ -91,21 +100,20 @@ public class NetworkUtils {
      * @throws IOException Related to network and stream reading
      */
     public static String getResponseFromHttpUrl(URL url) throws IOException {
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        //implemented the OKHttp library to communicate with the Movie DB servers
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        Response response = null;
         try {
-            InputStream in = urlConnection.getInputStream();
-
-            Scanner scanner = new Scanner(in);
-            scanner.useDelimiter("\\A");
-
-            boolean hasInput = scanner.hasNext();
-            if (hasInput) {
-                return scanner.next();
-            } else {
-                return null;
-            }
+            response = client.newCall(request).execute();
+            return response.body().string();
         } finally {
-            urlConnection.disconnect();
+            if (response != null) {
+                response.close();
+            }
         }
     }
 }

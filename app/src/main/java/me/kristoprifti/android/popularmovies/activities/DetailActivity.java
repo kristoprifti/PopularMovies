@@ -2,6 +2,7 @@ package me.kristoprifti.android.popularmovies.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -12,6 +13,8 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.models.Movie;
 
@@ -19,35 +22,47 @@ public class DetailActivity extends AppCompatActivity {
 
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovieApp";
 
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.tv_movie_full_title) TextView mMovieFulltitleTextView;
+    @BindView(R.id.tv_movie_release_date) TextView mMovieReleaseDateTextView;
+    @BindView(R.id.tv_movie_languge) TextView mMovieOriginalLanguageTextView;
+    @BindView(R.id.tv_movie_popularity) TextView mMoviePopularityTextView;
+    @BindView(R.id.tv_movie_votes) TextView mMovieVotesTextView;
+    @BindView(R.id.tv_movie_rating) TextView mMovieRatingTextView;
+    @BindView(R.id.tv_movie_overview) TextView mMovieOverviewTextView;
+    @BindView(R.id.iv_movie_backdrop) ImageView mMovieBackdropImageView;
+    @BindView(R.id.iv_movie_poster) ImageView mMoviePosterImageView;
+    @BindView(R.id.mainWindow) CoordinatorLayout contentView;
+
     private Movie mMovie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
         if(getSupportActionBar() != null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        TextView mMovieFulltitleTextView = (TextView) findViewById(R.id.tv_movie_full_title);
-        TextView mMovieReleaseDateTextView = (TextView) findViewById(R.id.tv_movie_release_date);
-        TextView mMovieOriginalLanguageTextView = (TextView) findViewById(R.id.tv_movie_languge);
-        TextView mMoviePopularityTextView = (TextView) findViewById(R.id.tv_movie_popularity);
-        TextView mMovieVotesTextView = (TextView) findViewById(R.id.tv_movie_votes);
-        TextView mMovieRatingTextView = (TextView) findViewById(R.id.tv_movie_rating);
-        TextView mMovieOverviewTextView = (TextView) findViewById(R.id.tv_movie_overview);
-        ImageView mMovieBackdropImageView = (ImageView) findViewById(R.id.iv_movie_backdrop);
-        ImageView mMoviePosterImageView = (ImageView) findViewById(R.id.iv_movie_poster);
         Intent intent = getIntent();
-
         if (intent != null) {
-            if (intent.hasExtra(Intent.EXTRA_TEXT)) {
-                mMovie = intent.getParcelableExtra(Intent.EXTRA_TEXT);
+            if (intent.hasExtra(getString(R.string.intent_movie_object))) {
+                mMovie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
 
-                if(getSupportActionBar() != null)
+                int colorPalette = 0;
+                if(intent.hasExtra(getString(R.string.intent_color_integer))) {
+                    colorPalette = intent.getIntExtra(getString(R.string.intent_color_integer), 0);
+                }
+
+                if(getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(mMovie.getOriginalTitle());
+                }
+
+                if(colorPalette != 0) {
+                    colorizeActivity(colorPalette);
+                }
 
                 mMovieFulltitleTextView.setText(mMovie.getOriginalTitle());
                 mMovieReleaseDateTextView.append(mMovie.getReleaseDate());
@@ -60,6 +75,10 @@ public class DetailActivity extends AppCompatActivity {
                 Picasso.with(this).load(mMovie.getPosterPath()).into(mMoviePosterImageView);
             }
         }
+    }
+
+    private void colorizeActivity(int colorPalette){
+        contentView.setBackgroundColor(colorPalette);
     }
 
     /**

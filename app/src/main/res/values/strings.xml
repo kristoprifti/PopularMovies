@@ -31,6 +31,8 @@
     <!-- Value in SharedPreferences for top rated ordering option [CHAR LIMIT=NONE] -->
     <string name="pref_orderby_top_rated" translatable="false">top_rated</string>
 
+    <string name="intent_movie_object" translatable="false">movie_object</string>
+    <string name="intent_color_integer" translatable="false">color_rgb</string>
 
     <string name="no_internet">No internet connection!</string>
     <string name="action_retry">Retry</string>

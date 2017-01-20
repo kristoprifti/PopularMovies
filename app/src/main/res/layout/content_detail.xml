@@ -4,6 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     app:behavior_overlapTop="20dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -14,7 +15,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal"
             android:layout_marginBottom="10dp"
             android:weightSum="2">
@@ -42,7 +43,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp"
                     android:textColor="@color/colorPrimaryText"
-                    android:textSize="18sp"/>
+                    android:textSize="@dimen/large_dimension_text"
+                    tools:text="Test Title"/>
 
                 <TextView
                     android:id="@+id/tv_movie_release_date"
@@ -51,7 +53,7 @@
                     android:layout_marginBottom="5dp"
                     android:text="@string/released_date_label"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="14sp"/>
+                    tools:text="Test Title"/>
 
                 <TextView
                     android:id="@+id/tv_movie_languge"
@@ -60,7 +62,7 @@
                     android:layout_marginBottom="5dp"
                     android:text="@string/language_label"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="14sp"/>
+                    tools:text="Test Title"/>
 
                 <TextView
                     android:id="@+id/tv_movie_popularity"
@@ -69,7 +71,7 @@
                     android:layout_marginBottom="5dp"
                     android:text="@string/popularity_label"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="14sp"/>
+                    tools:text="Test Title"/>
 
                 <TextView
                     android:id="@+id/tv_movie_votes"
@@ -78,7 +80,7 @@
                     android:layout_marginBottom="5dp"
                     android:text="@string/votes_label"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="14sp"/>
+                    tools:text="Test Title"/>
 
                 <TextView
                     android:id="@+id/tv_movie_rating"
@@ -86,7 +88,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/rating_label"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="14sp"/>
+                    tools:text="Test Title"/>
 
             </LinearLayout>
 
@@ -111,14 +113,15 @@
                     android:text="@string/overview_label"
                     android:layout_marginBottom="10dp"
                     android:textColor="@color/colorPrimaryText"
-                    android:textSize="16sp"/>
+                    android:textSize="@dimen/header_size_text"
+                    tools:text="Test Title"/>
 
                 <TextView
                     android:id="@+id/tv_movie_overview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/colorSecondaryText"
-                    android:textSize="14sp"/>
+                    tools:text="Test Title"/>
 
             </LinearLayout>
 
