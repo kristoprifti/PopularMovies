@@ -1,17 +1,27 @@
 package me.kristoprifti.android.popularmovies.activities;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -32,7 +42,8 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.tv_movie_overview) TextView mMovieOverviewTextView;
     @BindView(R.id.iv_movie_backdrop) ImageView mMovieBackdropImageView;
     @BindView(R.id.iv_movie_poster) ImageView mMoviePosterImageView;
-    @BindView(R.id.mainWindow) CoordinatorLayout contentView;
+    @BindView(R.id.appbar) AppBarLayout appBarLayout;
+    @BindView(R.id.collapsing_toolbar) CollapsingToolbarLayout collapsingToolbarLayout;
 
     private Movie mMovie;
 
@@ -42,26 +53,26 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-
         if(getSupportActionBar() != null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        ActivityCompat.postponeEnterTransition(this);
+        int colorPalette;
+
         Intent intent = getIntent();
         if (intent != null) {
+            if(intent.hasExtra(getString(R.string.intent_color_integer)) && intent.getIntExtra(getString(R.string.intent_color_integer), 0) != 0) {
+                colorPalette = intent.getIntExtra(getString(R.string.intent_color_integer), 0);
+            } else {
+                colorPalette = R.color.colorPrimary;
+            }
+            colorizeActivity(colorPalette);
+
             if (intent.hasExtra(getString(R.string.intent_movie_object))) {
                 mMovie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
 
-                int colorPalette = 0;
-                if(intent.hasExtra(getString(R.string.intent_color_integer))) {
-                    colorPalette = intent.getIntExtra(getString(R.string.intent_color_integer), 0);
-                }
-
                 if(getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(mMovie.getOriginalTitle());
-                }
-
-                if(colorPalette != 0) {
-                    colorizeActivity(colorPalette);
                 }
 
                 mMovieFulltitleTextView.setText(mMovie.getOriginalTitle());
@@ -72,13 +83,41 @@ public class DetailActivity extends AppCompatActivity {
                 mMovieRatingTextView.append(String.valueOf(mMovie.getRating()) + getString(R.string.out_of_ten));
                 mMovieOverviewTextView.setText(mMovie.getOverview());
                 Picasso.with(this).load(mMovie.getBackdropPath()).into(mMovieBackdropImageView);
-                Picasso.with(this).load(mMovie.getPosterPath()).into(mMoviePosterImageView);
+                Picasso.with(this).load(mMovie.getPosterPath()).into(mMoviePosterImageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        ActivityCompat.startPostponedEnterTransition(DetailActivity.this);
+                    }
+
+                    @Override
+                    public void onError() {
+
+                    }
+                });
+
             }
         }
     }
 
+    //get color from Palette API
     private void colorizeActivity(int colorPalette){
-        contentView.setBackgroundColor(colorPalette);
+        //set the 500 color to the collapsing toolbar
+        collapsingToolbarLayout.setContentScrimColor(colorPalette);
+        collapsingToolbarLayout.setBackgroundColor(colorPalette);
+        //check if the version of the android is API 21 and above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            /*
+             *convert the 500 color to 700 for the status bar and assign it to the status bar
+             * hsv[0] : Hue (0 .. 360)
+             * hsv[1] : Saturation (0...1)
+             * hsv[2] : Value (0...1)
+             */
+            float[] hsv = new float[3];
+            Color.colorToHSV(colorPalette, hsv);
+            hsv[2] *= 0.7f;
+            int colorPrimaryDark = Color.HSVToColor(hsv);
+            getWindow().setStatusBarColor(colorPrimaryDark);
+        }
     }
 
     /**
@@ -99,5 +138,16 @@ public class DetailActivity extends AppCompatActivity {
         MenuItem menuItem = menu.findItem(R.id.action_share);
         menuItem.setIntent(createShareForecastIntent());
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                supportFinishAfterTransition();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

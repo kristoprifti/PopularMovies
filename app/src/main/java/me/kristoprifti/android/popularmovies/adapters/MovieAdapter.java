@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -141,8 +142,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieAdapter
                     @Override
                     public void onGenerated(Palette palette) {
                         //work with the palette here
-                        if(palette.getVibrantSwatch() != null)
-                            colorFromPalette[position] = palette.getVibrantSwatch().getRgb();
+                        if(palette.getDarkVibrantColor(ContextCompat.getColor(mContext, R.color.colorPrimary)) != 0)
+                            colorFromPalette[position] = palette.getDarkVibrantColor(ContextCompat.getColor(mContext, R.color.colorPrimary));
                     }
                 });
             }
