@@ -11,23 +11,23 @@ import android.provider.BaseColumns;
  */
 public class MoviesContract {
 
-    public static final String CONTENT_AUTHORITY = "me.kristoprifti.android.popularmovies";
+    static final String CONTENT_AUTHORITY = "me.kristoprifti.android.popularmovies";
 
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+    private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 
-    public static final String PATH_MOVIE = "movie";
+    static final String PATH_MOVIE = "movie";
 
     public static final class MoviesEntry implements BaseColumns {
         public static final Uri CONTENT_URI =
                 BASE_CONTENT_URI.buildUpon().appendPath(PATH_MOVIE).build();
 
-        public static final String CONTENT_TYPE =
+        static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
 
         //Table name for the database
-        public static final String TABLE_NAME = "movie";
+        static final String TABLE_NAME = "movie";
 
         //all the field names declared as static final strings below
         public static final String COLUMN_MOVIE_ID = "movie_id";
@@ -41,7 +41,7 @@ public class MoviesContract {
         public static final String COLUMN_MOVIE_POPULARITY = "popularity";
         public static final String COLUMN_MOVIE_VOTES = "votes";
 
-        public static Uri buildMovieUri(long id) {
+        static Uri buildMovieUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
     }

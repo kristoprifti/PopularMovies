@@ -53,7 +53,7 @@ public class Movie implements Parcelable{
         this.movieId = cursor.getInt(MainActivity.INDEX_COLUMN_MOVIE_ID);
     }
 
-    public Movie(Parcel in){
+    private Movie(Parcel in){
         originalTitle = in.readString();
         posterPath = in.readString();
         backdropPath = in.readString();

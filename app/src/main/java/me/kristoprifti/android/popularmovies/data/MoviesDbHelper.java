@@ -8,12 +8,12 @@ import me.kristoprifti.android.popularmovies.data.MoviesContract.MoviesEntry;
 /**
  * Manages a local database for movie data.
  */
-public class MoviesDbHelper extends SQLiteOpenHelper {
+class MoviesDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "movie.db";
     private static final int DATABASE_VERSION = 1;
 
-    public MoviesDbHelper(Context context){
+    MoviesDbHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
