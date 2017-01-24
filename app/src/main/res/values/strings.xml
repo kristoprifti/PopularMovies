@@ -8,6 +8,9 @@
     <string name="error_message">
         An error has occurred. Please try again by clicking REFRESH
     </string>
+    <string name="no_favorites_message">
+        There are no movies saved in Favorites!
+    </string>
     <string name="title_activity_settings">SettingsActivity</string>
 
     <!-- - - - - - - - - - - -->
@@ -22,6 +25,9 @@
     <!-- Label for top rated option in order by preference [CHAR LIMIT=25] -->
     <string name="pref_orderby_label_top_rated">Top Rated</string>
 
+    <!-- Label for favorites option in order by preference [CHAR LIMIT=25] -->
+    <string name="pref_orderby_label_favorites">Favorites</string>
+
     <!-- Key name for order by preference in SharedPreferences [CHAR LIMIT=NONE] -->
     <string name="pref_orderby_key" translatable="false">order_by</string>
 
@@ -30,6 +36,9 @@
 
     <!-- Value in SharedPreferences for top rated ordering option [CHAR LIMIT=NONE] -->
     <string name="pref_orderby_top_rated" translatable="false">top_rated</string>
+
+    <!-- Value in SharedPreferences for favorites ordering option [CHAR LIMIT=NONE] -->
+    <string name="pref_orderby_favorites" translatable="false">favorites</string>
 
     <string name="intent_movie_object" translatable="false">movie_object</string>
     <string name="intent_color_integer" translatable="false">color_rgb</string>

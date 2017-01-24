@@ -3,10 +3,12 @@
     <string-array name="pref_orderby_options">
         <item>@string/pref_orderby_label_popular</item>
         <item>@string/pref_orderby_label_top_rated</item>
+        <item>@string/pref_orderby_label_favorites</item>
     </string-array>
 
     <string-array name="pref_orderby_values">
         <item>@string/pref_orderby_popular</item>
         <item>@string/pref_orderby_top_rated</item>
+        <item>@string/pref_orderby_favorites</item>
     </string-array>
 </resources>

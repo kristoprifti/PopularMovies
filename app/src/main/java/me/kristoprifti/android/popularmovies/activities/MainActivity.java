@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -37,6 +38,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.adapters.MovieAdapter;
+import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import me.kristoprifti.android.popularmovies.data.PopularMoviesPreferences;
 import me.kristoprifti.android.popularmovies.models.Movie;
 import me.kristoprifti.android.popularmovies.utilities.MovieDBJsonUtils;
@@ -49,6 +51,32 @@ public class MainActivity extends AppCompatActivity implements
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private MovieAdapter mMovieAdapter;
+
+    private static final String[] MOVIE_COLUMNS = {
+            MoviesContract.MoviesEntry._ID,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_ID,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES
+    };
+
+    public static final int INDEX_COLUMN_ID = 0;
+    public static final int INDEX_COLUMN_MOVIE_ID = 1;
+    public static final int INDEX_COLUMN_LANGUAGE = 2;
+    public static final int INDEX_COLUMN_POSTER = 3;
+    public static final int INDEX_COLUMN_TITLE = 4;
+    public static final int INDEX_COLUMN_BACKDROP = 5;
+    public static final int INDEX_COLUMN_OVERVIEW = 6;
+    public static final int INDEX_COLUMN_RELEASE_DATE = 7;
+    public static final int INDEX_COLUMN_POPULARITY = 8;
+    public static final int INDEX_COLUMN_RATING = 9;
+    public static final int INDEX_COLUMN_VOTES = 10;
 
     @BindView(R.id.rv_movies) RecyclerView mRecyclerView;
     @BindView(R.id.tv_error_message_display) TextView mErrorMessageDisplay;
@@ -178,16 +206,34 @@ public class MainActivity extends AppCompatActivity implements
                 String orderByPreference = PopularMoviesPreferences
                         .getPreferredSortType(MainActivity.this);
 
-                URL movieRequestUrl = NetworkUtils.buildUrl(orderByPreference);
-
-                try {
-                    String jsonMovieResponse = NetworkUtils
-                            .getResponseFromHttpUrl(movieRequestUrl);
-                    return MovieDBJsonUtils
-                            .getSimpleMovieStringsFromJson(jsonMovieResponse);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
+                if(orderByPreference.equals(getString(R.string.pref_orderby_favorites))){
+                    ArrayList<Movie> favoriteMoviesList = new ArrayList<>();
+                    Cursor cursor = getContext().getContentResolver().query(
+                            MoviesContract.MoviesEntry.CONTENT_URI,
+                            MOVIE_COLUMNS,
+                            null,
+                            null,
+                            null
+                    );
+                    if (cursor != null && cursor.moveToFirst()) {
+                        do {
+                            Movie movie = new Movie(cursor);
+                            favoriteMoviesList.add(movie);
+                        } while (cursor.moveToNext());
+                        cursor.close();
+                    }
+                    return favoriteMoviesList;
+                } else {
+                    URL movieRequestUrl = NetworkUtils.buildUrl(orderByPreference);
+                    try {
+                        String jsonMovieResponse = NetworkUtils
+                                .getResponseFromHttpUrl(movieRequestUrl);
+                        return MovieDBJsonUtils
+                                .getSimpleMovieStringsFromJson(jsonMovieResponse);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 }
             }
 
@@ -216,9 +262,14 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onLoadFinished: starts");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
         mMovieAdapter.setMoviesList(data);
-        if (null == data) {
+        if (data == null) {
+            Log.d(TAG, "onLoadFinished: show error");
             showErrorMessage();
+        } else if (data.size() == 0) {
+            Log.d(TAG, "onLoadFinished: no favorite movies yet");
+            showNoFavoritesMessage();
         } else {
+            Log.d(TAG, "onLoadFinished: show data");
             showMovieDataView();
         }
         Log.d(TAG, "onLoadFinished: ends");
@@ -286,8 +337,23 @@ public class MainActivity extends AppCompatActivity implements
         /* First, hide the currently visible data */
         mRecyclerView.setVisibility(View.INVISIBLE);
         /* Then, show the error */
+        mErrorMessageDisplay.setText(getString(R.string.error_message));
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
         Log.d(TAG, "showErrorMessage: ends");
+    }
+
+    /**
+     * This method will make the error message visible and hide the movie
+     * View.
+     */
+    private void showNoFavoritesMessage() {
+        Log.d(TAG, "showNoFavoritesMessage: starts");
+        /* First, hide the currently visible data */
+        mRecyclerView.setVisibility(View.INVISIBLE);
+        /* Then, show the error */
+        mErrorMessageDisplay.setText(getString(R.string.no_favorites_message));
+        mErrorMessageDisplay.setVisibility(View.VISIBLE);
+        Log.d(TAG, "showNoFavoritesMessage: ends");
     }
 
     /**
