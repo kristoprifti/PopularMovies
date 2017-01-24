@@ -10,7 +10,7 @@ import me.kristoprifti.android.popularmovies.data.MoviesContract.MoviesEntry;
  */
 public class MoviesDbHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "movies.db";
+    private static final String DATABASE_NAME = "movie.db";
     private static final int DATABASE_VERSION = 1;
 
     public MoviesDbHelper(Context context){
@@ -34,8 +34,7 @@ public class MoviesDbHelper extends SQLiteOpenHelper {
                 MoviesEntry.COLUMN_MOVIE_RATING + " REAL NOT NULL, " +
                 MoviesEntry.COLUMN_MOVIE_LANGUAGE + " TEXT NOT NULL, " +
                 MoviesEntry.COLUMN_MOVIE_POPULARITY + " REAL NOT NULL, " +
-                MoviesEntry.COLUMN_MOVIE_VOTES + " INTEGER NOT NULL" +
-                " UNIQUE (" + MoviesEntry.COLUMN_MOVIE_ID + ") ON CONFLICT REPLACE);";
+                MoviesEntry.COLUMN_MOVIE_VOTES + " INTEGER NOT NULL" + ");";
         /*
          * After we've spelled out our SQLite table creation statement above, we actually execute
          * that SQL with the execSQL method of our SQLite database object.
