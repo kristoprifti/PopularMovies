@@ -111,10 +111,13 @@ public class MainActivity extends AppCompatActivity implements
         /*
          * initializing the loader
          */
-        if(mMoviesList == null) {
-            initLoader();
-        } else {
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+        if(!PopularMoviesPreferences
+                .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
+            if (mMoviesList == null) {
+                initLoader();
+            } else {
+                getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+            }
         }
 
         Log.d(TAG, "onCreate: registering on preference changed listener");
@@ -126,6 +129,16 @@ public class MainActivity extends AppCompatActivity implements
                 .registerOnSharedPreferenceChangeListener(this);
 
         Log.d(TAG, "onCreate: ends");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(PopularMoviesPreferences
+                .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
+            invalidateData();
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+        }
     }
 
     @Override
@@ -173,12 +186,10 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public ArrayList<Movie> loadInBackground() {
                 Log.d(TAG, "loadInBackground: starts");
-                String orderByPreference = PopularMoviesPreferences
-                        .getPreferredSortType(MainActivity.this);
-                if(orderByPreference.equals(getString(R.string.pref_orderby_favorites))){
+                if(PopularMoviesPreferences.getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
                     return NetworkUtils.requestFavoriteMovies(MainActivity.this);
                 } else {
-                    return NetworkUtils.requestMovieFromServer(orderByPreference);
+                    return NetworkUtils.requestMovieFromServer(PopularMoviesPreferences.getPreferredSortType(MainActivity.this));
                 }
             }
 
@@ -364,26 +375,16 @@ public class MainActivity extends AppCompatActivity implements
 
     /*Check if app is connected to the internet*/
     public void initLoader() {
-        //get order by preference
-        String orderByPreference = PopularMoviesPreferences
-                .getPreferredSortType(MainActivity.this);
-
-        //if the order by preference is set to favorites there is no need for internet
-        //if the order by preference is not set to favorites then we have to check for internet connection
-        if(orderByPreference.equals(getString(R.string.pref_orderby_favorites))){
+        //get connectivity manager in order to check the network status
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        //if there is internet then we initialize the loader
+        //in case of no internet connection we notify the user through a snackBar
+        if (netInfo != null && netInfo.isConnectedOrConnecting()){
             getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
         } else {
-            //get connectivity manager in order to check the network status
-            ConnectivityManager cm =
-                    (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo netInfo = cm.getActiveNetworkInfo();
-            //if there is internet then we initialize the loader
-            //in case of no internet connection we notify the user through a snackBar
-            if (netInfo != null && netInfo.isConnectedOrConnecting()){
-                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
-            } else {
-                showSnackBar(getString(R.string.no_internet), true);
-            }
+            showSnackBar(getString(R.string.no_internet), true);
         }
     }
 
