@@ -19,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -29,6 +28,7 @@ import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import me.kristoprifti.android.popularmovies.models.Movie;
+import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 public class DetailActivity extends AppCompatActivity {
 
@@ -72,20 +72,58 @@ public class DetailActivity extends AppCompatActivity {
             if (intent.hasExtra(getString(R.string.intent_movie_object))) {
                 final Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
 
+                new AsyncTask<Void, Void, Boolean>() {
+                    @Override
+                    protected Boolean doInBackground(Void... params) {
+                        return NetworkUtils.isMovieFavorite(DetailActivity.this, movie.getMovieId());
+                    }
+
+                    @Override
+                    protected void onPostExecute(final Boolean isFavorite) {
+                        if(isFavorite){
+                            addToFavorites.setImageResource(R.drawable.ic_favorite);
+                        } else {
+                            addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                        }
+
+                        addToFavorites.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (isFavorite) {
+                                    removeMovieFromFavorites(movie);
+                                } else {
+                                    addMovieToFavorites(movie);
+                                }
+                            }
+                        });
+                    }
+                }.execute();
+
                 if(getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(movie.getOriginalTitle());
                 }
 
                 displayMovieData(movie);
-
-                addToFavorites.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        addMovieToFavorites(movie);
-                    }
-                });
             }
         }
+    }
+
+    private void removeMovieFromFavorites(final Movie movie) {
+        new AsyncTask<Void, Void, Integer>() {
+            @Override
+            protected Integer doInBackground(Void... params) {
+                return getContentResolver().delete(
+                        MoviesContract.MoviesEntry.CONTENT_URI,
+                        MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{Integer.toString(movie.getMovieId())}
+                );
+            }
+
+            @Override
+            protected void onPostExecute(Integer rowsDeleted) {
+                addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+            }
+        }.execute();
     }
 
     private void addMovieToFavorites(final Movie movie) {
@@ -111,8 +149,7 @@ public class DetailActivity extends AppCompatActivity {
 
             @Override
             protected void onPostExecute(Uri returnUri) {
-                //add.setIcon(R.drawable.abc_btn_rating_star_on_mtrl_alpha);
-                Toast.makeText(DetailActivity.this, "Added to favorites", Toast.LENGTH_SHORT).show();
+                addToFavorites.setImageResource(R.drawable.ic_favorite);
             }
         }.execute();
     }

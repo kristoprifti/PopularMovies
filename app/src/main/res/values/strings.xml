@@ -8,7 +8,7 @@
     <string name="package_name">me.kristoprifti.android.popularmovies</string>
 
     <string name="error_message">
-        An error has occurred. Please try again by clicking REFRESH
+        An error has occurred. Please try again!
     </string>
     <string name="no_favorites_message">
         There are no movies saved in Favorites!

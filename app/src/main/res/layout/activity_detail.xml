@@ -50,7 +50,7 @@
         android:layout_margin="@dimen/fab_margin"
         android:clickable="true"
         android:id="@+id/favoriteButton"
-        android:src="@android:drawable/ic_menu_share"
+        android:src="@drawable/ic_favorite"
         app:layout_anchor="@+id/appbar"
         android:theme="@style/MyFloatingButton"
         android:visibility="visible"

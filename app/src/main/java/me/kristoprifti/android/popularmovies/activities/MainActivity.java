@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private MovieAdapter mMovieAdapter;
+    private Snackbar snackbar;
 
     private static final String[] MOVIE_COLUMNS = {
             MoviesContract.MoviesEntry._ID,
@@ -79,12 +80,11 @@ public class MainActivity extends AppCompatActivity implements
     public static final int INDEX_COLUMN_VOTES = 10;
 
     @BindView(R.id.rv_movies) RecyclerView mRecyclerView;
-    @BindView(R.id.tv_error_message_display) TextView mErrorMessageDisplay;
     @BindView(R.id.pb_loading_indicator) ProgressBar mLoadingIndicator;
     @BindView(R.id.mainView) FrameLayout mainView;
     @BindView(R.id.toolbar) Toolbar toolbar;
 
-    private static final int MOVIE_LOADER_ID = 0;
+    private static final int MOVIE_LOADER_ID = 111;
     private static boolean PREFERENCES_HAVE_BEEN_UPDATED = false;
 
     /* This ArrayList will hold and help cache our movies data */
@@ -205,35 +205,10 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "loadInBackground: starts");
                 String orderByPreference = PopularMoviesPreferences
                         .getPreferredSortType(MainActivity.this);
-
                 if(orderByPreference.equals(getString(R.string.pref_orderby_favorites))){
-                    ArrayList<Movie> favoriteMoviesList = new ArrayList<>();
-                    Cursor cursor = getContext().getContentResolver().query(
-                            MoviesContract.MoviesEntry.CONTENT_URI,
-                            MOVIE_COLUMNS,
-                            null,
-                            null,
-                            null
-                    );
-                    if (cursor != null && cursor.moveToFirst()) {
-                        do {
-                            Movie movie = new Movie(cursor);
-                            favoriteMoviesList.add(movie);
-                        } while (cursor.moveToNext());
-                        cursor.close();
-                    }
-                    return favoriteMoviesList;
+                    return requestFavoriteMovies();
                 } else {
-                    URL movieRequestUrl = NetworkUtils.buildUrl(orderByPreference);
-                    try {
-                        String jsonMovieResponse = NetworkUtils
-                                .getResponseFromHttpUrl(movieRequestUrl);
-                        return MovieDBJsonUtils
-                                .getSimpleMovieStringsFromJson(jsonMovieResponse);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return null;
-                    }
+                    return requestMovieFromServer(orderByPreference);
                 }
             }
 
@@ -249,6 +224,38 @@ public class MainActivity extends AppCompatActivity implements
                 Log.d(TAG, "deliverResult: ends");
             }
         };
+    }
+
+    private ArrayList<Movie> requestMovieFromServer(String orderBy){
+        URL movieRequestUrl = NetworkUtils.buildUrl(orderBy);
+        try {
+            String jsonMovieResponse = NetworkUtils
+                    .getResponseFromHttpUrl(movieRequestUrl);
+            return MovieDBJsonUtils
+                    .getSimpleMovieStringsFromJson(jsonMovieResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private ArrayList<Movie> requestFavoriteMovies(){
+        ArrayList<Movie> favoriteMoviesList = new ArrayList<>();
+        Cursor cursor = getContentResolver().query(
+                MoviesContract.MoviesEntry.CONTENT_URI,
+                MOVIE_COLUMNS,
+                null,
+                null,
+                null
+        );
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                Movie movie = new Movie(cursor);
+                favoriteMoviesList.add(movie);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return favoriteMoviesList;
     }
 
     /**
@@ -321,10 +328,11 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void showMovieDataView() {
         Log.d(TAG, "showMovieDataView: starts");
-        /* First, make sure the error is invisible */
-        mErrorMessageDisplay.setVisibility(View.INVISIBLE);
         /* Then, make sure the weather data is visible */
         mRecyclerView.setVisibility(View.VISIBLE);
+        if(snackbar != null && snackbar.isShown()){
+            snackbar.dismiss();
+        }
         Log.d(TAG, "showMovieDataView: ends");
     }
 
@@ -337,8 +345,7 @@ public class MainActivity extends AppCompatActivity implements
         /* First, hide the currently visible data */
         mRecyclerView.setVisibility(View.INVISIBLE);
         /* Then, show the error */
-        mErrorMessageDisplay.setText(getString(R.string.error_message));
-        mErrorMessageDisplay.setVisibility(View.VISIBLE);
+        showSnackBar(getString(R.string.error_message), true);
         Log.d(TAG, "showErrorMessage: ends");
     }
 
@@ -351,8 +358,7 @@ public class MainActivity extends AppCompatActivity implements
         /* First, hide the currently visible data */
         mRecyclerView.setVisibility(View.INVISIBLE);
         /* Then, show the error */
-        mErrorMessageDisplay.setText(getString(R.string.no_favorites_message));
-        mErrorMessageDisplay.setVisibility(View.VISIBLE);
+        showSnackBar(getString(R.string.no_favorites_message), false);
         Log.d(TAG, "showNoFavoritesMessage: ends");
     }
 
@@ -363,7 +369,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStart() {
         super.onStart();
-
         /*
          * If the preferences for sorting have changed since the user was last in
          * MainActivity, perform another query and set the flag to false.
@@ -399,12 +404,6 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.action_refresh) {
-            invalidateData();
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
-            return true;
-        }
-
         if (id == R.id.action_settings) {
             Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
             startActivity(startSettingsActivity);
@@ -425,34 +424,51 @@ public class MainActivity extends AppCompatActivity implements
 
     /*Check if app is connected to the internet*/
     public void initLoader() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        if (netInfo != null && netInfo.isConnectedOrConnecting()){
+        //get order by preference
+        String orderByPreference = PopularMoviesPreferences
+                .getPreferredSortType(MainActivity.this);
+
+        //if the order by preference is set to favorites there is no need for internet
+        //if the order by preference is not set to favorites then we have to check for internet connection
+        if(orderByPreference.equals(getString(R.string.pref_orderby_favorites))){
             getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
         } else {
-            Snackbar snackbar = Snackbar
-                    .make(mainView, R.string.no_internet, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.action_retry, new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            initLoader();
-                        }
-                    });
+            //get connectivity manager in order to check the network status
+            ConnectivityManager cm =
+                    (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo netInfo = cm.getActiveNetworkInfo();
+            //if there is internet then we initialize the loader
+            //in case of no internet connection we notify the user through a snackBar
+            if (netInfo != null && netInfo.isConnectedOrConnecting()){
+                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+            } else {
+                showSnackBar(getString(R.string.no_internet), true);
+            }
+        }
+    }
 
+    private void showSnackBar(String message, boolean action){
+        snackbar = Snackbar.make(mainView, message, Snackbar.LENGTH_INDEFINITE);
+        if(action){
+            snackbar.setAction(R.string.action_retry, new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    initLoader();
+                }
+            });
             // Changing message text color
             snackbar.setActionTextColor(ContextCompat.getColor(this, R.color.colorAccent));
-
-            // Changing snackbar background color
-            ViewGroup group = (ViewGroup) snackbar.getView();
-            group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorPrimary));
-
-            // Changing action button text color
-            View snackbarView = snackbar.getView();
-            TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
-            textView.setTextColor(Color.WHITE);
-
-            snackbar.show();
         }
+
+        // Changing snackbar background color
+        ViewGroup group = (ViewGroup) snackbar.getView();
+        group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorPrimary));
+
+        // Changing action button text color
+        View snackbarView = snackbar.getView();
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(Color.WHITE);
+
+        snackbar.show();
     }
 }

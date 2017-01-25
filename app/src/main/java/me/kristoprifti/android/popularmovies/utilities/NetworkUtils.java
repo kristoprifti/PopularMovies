@@ -1,6 +1,8 @@
 package me.kristoprifti.android.popularmovies.utilities;
 
+import android.content.Context;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 
@@ -8,6 +10,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -115,5 +118,23 @@ public class NetworkUtils {
                 response.close();
             }
         }
+    }
+
+    public static Boolean isMovieFavorite(Context context, int movieId){
+        Cursor cursor = context.getContentResolver().query(
+                MoviesContract.MoviesEntry.CONTENT_URI,
+                null,   // projection
+                MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?", // selection
+                new String[] { Integer.toString(movieId) },   // selectionArgs
+                null    // sort order
+        );
+
+        int numRows = 0;
+        if (cursor != null) {
+            numRows = cursor.getCount();
+            cursor.close();
+        }
+
+        return numRows > 0;
     }
 }

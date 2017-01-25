@@ -20,16 +20,6 @@
             android:layout_height="match_parent"
             tools:targetApi="lollipop" />
 
-        <TextView
-            android:id="@+id/tv_error_message_display"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:padding="16dp"
-            android:textSize="@dimen/error_size_text"
-            android:visibility="invisible"
-            tools:text="Test Title" />
-
         <ProgressBar
             android:id="@+id/pb_loading_indicator"
             android:layout_height="42dp"
