@@ -4,7 +4,7 @@ import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import me.kristoprifti.android.popularmovies.activities.MainActivity;
+import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 /**
  * this class is a model for the Movie objects to hold all the information for each movie
@@ -41,16 +41,16 @@ public class Movie implements Parcelable{
     }
 
     public Movie(Cursor cursor) {
-        this.originalTitle = cursor.getString(MainActivity.INDEX_COLUMN_TITLE);
-        this.posterPath = cursor.getString(MainActivity.INDEX_COLUMN_POSTER);
-        this.backdropPath = cursor.getString(MainActivity.INDEX_COLUMN_BACKDROP);
-        this.overview = cursor.getString(MainActivity.INDEX_COLUMN_OVERVIEW);
-        this.releaseDate = cursor.getString(MainActivity.INDEX_COLUMN_RELEASE_DATE);
-        this.rating = cursor.getFloat(MainActivity.INDEX_COLUMN_RATING);
-        this.originalLanguage = cursor.getString(MainActivity.INDEX_COLUMN_LANGUAGE);
-        this.voteCount = cursor.getInt(MainActivity.INDEX_COLUMN_VOTES);
-        this.popularity = cursor.getDouble(MainActivity.INDEX_COLUMN_POPULARITY);
-        this.movieId = cursor.getInt(MainActivity.INDEX_COLUMN_MOVIE_ID);
+        this.originalTitle = cursor.getString(NetworkUtils.INDEX_COLUMN_TITLE);
+        this.posterPath = cursor.getString(NetworkUtils.INDEX_COLUMN_POSTER);
+        this.backdropPath = cursor.getString(NetworkUtils.INDEX_COLUMN_BACKDROP);
+        this.overview = cursor.getString(NetworkUtils.INDEX_COLUMN_OVERVIEW);
+        this.releaseDate = cursor.getString(NetworkUtils.INDEX_COLUMN_RELEASE_DATE);
+        this.rating = cursor.getFloat(NetworkUtils.INDEX_COLUMN_RATING);
+        this.originalLanguage = cursor.getString(NetworkUtils.INDEX_COLUMN_LANGUAGE);
+        this.voteCount = cursor.getInt(NetworkUtils.INDEX_COLUMN_VOTES);
+        this.popularity = cursor.getDouble(NetworkUtils.INDEX_COLUMN_POPULARITY);
+        this.movieId = cursor.getInt(NetworkUtils.INDEX_COLUMN_MOVIE_ID);
     }
 
     private Movie(Parcel in){

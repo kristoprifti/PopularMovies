@@ -9,8 +9,10 @@ import android.util.DisplayMetrics;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
+import me.kristoprifti.android.popularmovies.models.Movie;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -33,6 +35,31 @@ public class NetworkUtils {
 
     private static final String MOVIE_BASE_URL = STATIC_MOVIE_URL;
 
+    private static final String[] MOVIE_COLUMNS = {
+            MoviesContract.MoviesEntry._ID,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_ID,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING,
+            MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES
+    };
+
+    public static final int INDEX_COLUMN_MOVIE_ID = 1;
+    public static final int INDEX_COLUMN_LANGUAGE = 2;
+    public static final int INDEX_COLUMN_POSTER = 3;
+    public static final int INDEX_COLUMN_TITLE = 4;
+    public static final int INDEX_COLUMN_BACKDROP = 5;
+    public static final int INDEX_COLUMN_OVERVIEW = 6;
+    public static final int INDEX_COLUMN_RELEASE_DATE = 7;
+    public static final int INDEX_COLUMN_POPULARITY = 8;
+    public static final int INDEX_COLUMN_RATING = 9;
+    public static final int INDEX_COLUMN_VOTES = 10;
+
     /*
      * NOTE: These values only effect responses from TheMovieDB. They are simply here to allow us to
      * teach you how to build a URL if you were to use a real API.
@@ -47,7 +74,7 @@ public class NetworkUtils {
      * @param orderBy The parameter that will be queried by.
      * @return The URL to use to query the movie server.
      */
-    public static URL buildUrl(String orderBy) {
+    private static URL buildUrl(String orderBy) {
         Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                 .appendPath(orderBy)
                 .appendQueryParameter(API_KEY_PARAM, API_KEY)
@@ -102,7 +129,7 @@ public class NetworkUtils {
      * @return The contents of the HTTP response.
      * @throws IOException Related to network and stream reading
      */
-    public static String getResponseFromHttpUrl(URL url) throws IOException {
+    private static String getResponseFromHttpUrl(URL url) throws IOException {
         //implemented the OKHttp library to communicate with the Movie DB servers
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
@@ -136,5 +163,37 @@ public class NetworkUtils {
         }
 
         return numRows > 0;
+    }
+
+    public static ArrayList<Movie> requestMovieFromServer(String orderBy){
+        URL movieRequestUrl = NetworkUtils.buildUrl(orderBy);
+        try {
+            String jsonMovieResponse = NetworkUtils
+                    .getResponseFromHttpUrl(movieRequestUrl);
+            return MovieDBJsonUtils
+                    .getSimpleMovieStringsFromJson(jsonMovieResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static ArrayList<Movie> requestFavoriteMovies(Context context){
+        ArrayList<Movie> favoriteMoviesList = new ArrayList<>();
+        Cursor cursor = context.getContentResolver().query(
+                MoviesContract.MoviesEntry.CONTENT_URI,
+                MOVIE_COLUMNS,
+                null,
+                null,
+                null
+        );
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                Movie movie = new Movie(cursor);
+                favoriteMoviesList.add(movie);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return favoriteMoviesList;
     }
 }

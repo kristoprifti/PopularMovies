@@ -10,7 +10,7 @@ import me.kristoprifti.android.popularmovies.models.Movie;
 /**
  * Utility functions to handle TheMovieDB Map JSON data.
  */
-public class MovieDBJsonUtils {
+class MovieDBJsonUtils {
 
     /**
      * This method parses JSON from a web response and returns an ArrayList of Movie objects
@@ -22,7 +22,7 @@ public class MovieDBJsonUtils {
      *
      * @throws JSONException If JSON data cannot be properly parsed
      */
-    public static ArrayList<Movie> getSimpleMovieStringsFromJson(String movieJsonStr)
+    static ArrayList<Movie> getSimpleMovieStringsFromJson(String movieJsonStr)
             throws JSONException {
 
         /* Movie information. Each movie info is an element of the "results" array */
@@ -40,17 +40,17 @@ public class MovieDBJsonUtils {
         final String MOVIES_POPULARITY = "popularity";
         final String MOVIES_ID = "id";
 
-        /* String array to hold each day's weather String */
+        /* Arraylist of movie objects to hold each movie object */
         ArrayList<Movie> parsedMovieData;
 
-        JSONObject weatherJson = new JSONObject(movieJsonStr);
+        JSONObject movieJson = new JSONObject(movieJsonStr);
 
         /* Is there an error? */
-        if (weatherJson.getJSONArray(MOVIES_LIST).length() == 0) {
+        if (movieJson.getJSONArray(MOVIES_LIST).length() == 0) {
             return null;
         }
 
-        JSONArray moviesArray = weatherJson.getJSONArray(MOVIES_LIST);
+        JSONArray moviesArray = movieJson.getJSONArray(MOVIES_LIST);
 
         parsedMovieData = new ArrayList<>();
 

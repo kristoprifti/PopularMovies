@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -31,17 +30,14 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import java.net.URL;
 import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.adapters.MovieAdapter;
-import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import me.kristoprifti.android.popularmovies.data.PopularMoviesPreferences;
 import me.kristoprifti.android.popularmovies.models.Movie;
-import me.kristoprifti.android.popularmovies.utilities.MovieDBJsonUtils;
 import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 public class MainActivity extends AppCompatActivity implements
@@ -52,32 +48,6 @@ public class MainActivity extends AppCompatActivity implements
     private static final String TAG = MainActivity.class.getSimpleName();
     private MovieAdapter mMovieAdapter;
     private Snackbar snackbar;
-
-    private static final String[] MOVIE_COLUMNS = {
-            MoviesContract.MoviesEntry._ID,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_ID,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING,
-            MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES
-    };
-
-    public static final int INDEX_COLUMN_ID = 0;
-    public static final int INDEX_COLUMN_MOVIE_ID = 1;
-    public static final int INDEX_COLUMN_LANGUAGE = 2;
-    public static final int INDEX_COLUMN_POSTER = 3;
-    public static final int INDEX_COLUMN_TITLE = 4;
-    public static final int INDEX_COLUMN_BACKDROP = 5;
-    public static final int INDEX_COLUMN_OVERVIEW = 6;
-    public static final int INDEX_COLUMN_RELEASE_DATE = 7;
-    public static final int INDEX_COLUMN_POPULARITY = 8;
-    public static final int INDEX_COLUMN_RATING = 9;
-    public static final int INDEX_COLUMN_VOTES = 10;
 
     @BindView(R.id.rv_movies) RecyclerView mRecyclerView;
     @BindView(R.id.pb_loading_indicator) ProgressBar mLoadingIndicator;
@@ -206,9 +176,9 @@ public class MainActivity extends AppCompatActivity implements
                 String orderByPreference = PopularMoviesPreferences
                         .getPreferredSortType(MainActivity.this);
                 if(orderByPreference.equals(getString(R.string.pref_orderby_favorites))){
-                    return requestFavoriteMovies();
+                    return NetworkUtils.requestFavoriteMovies(MainActivity.this);
                 } else {
-                    return requestMovieFromServer(orderByPreference);
+                    return NetworkUtils.requestMovieFromServer(orderByPreference);
                 }
             }
 
@@ -226,37 +196,7 @@ public class MainActivity extends AppCompatActivity implements
         };
     }
 
-    private ArrayList<Movie> requestMovieFromServer(String orderBy){
-        URL movieRequestUrl = NetworkUtils.buildUrl(orderBy);
-        try {
-            String jsonMovieResponse = NetworkUtils
-                    .getResponseFromHttpUrl(movieRequestUrl);
-            return MovieDBJsonUtils
-                    .getSimpleMovieStringsFromJson(jsonMovieResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
-    private ArrayList<Movie> requestFavoriteMovies(){
-        ArrayList<Movie> favoriteMoviesList = new ArrayList<>();
-        Cursor cursor = getContentResolver().query(
-                MoviesContract.MoviesEntry.CONTENT_URI,
-                MOVIE_COLUMNS,
-                null,
-                null,
-                null
-        );
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                Movie movie = new Movie(cursor);
-                favoriteMoviesList.add(movie);
-            } while (cursor.moveToNext());
-            cursor.close();
-        }
-        return favoriteMoviesList;
-    }
 
     /**
      * Called when a previously created loader has finished its load.
@@ -328,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void showMovieDataView() {
         Log.d(TAG, "showMovieDataView: starts");
-        /* Then, make sure the weather data is visible */
+        /* Then, make sure the movie data is visible */
         mRecyclerView.setVisibility(View.VISIBLE);
         if(snackbar != null && snackbar.isShown()){
             snackbar.dismiss();
