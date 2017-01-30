@@ -147,24 +147,6 @@ public class NetworkUtils {
         }
     }
 
-    public static Boolean isMovieFavorite(Context context, int movieId){
-        Cursor cursor = context.getContentResolver().query(
-                MoviesContract.MoviesEntry.CONTENT_URI,
-                null,   // projection
-                MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?", // selection
-                new String[] { Integer.toString(movieId) },   // selectionArgs
-                null    // sort order
-        );
-
-        int numRows = 0;
-        if (cursor != null) {
-            numRows = cursor.getCount();
-            cursor.close();
-        }
-
-        return numRows > 0;
-    }
-
     public static ArrayList<Movie> requestMovieFromServer(String orderBy){
         URL movieRequestUrl = NetworkUtils.buildUrl(orderBy);
         try {

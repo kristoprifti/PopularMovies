@@ -2,18 +2,17 @@ package me.kristoprifti.android.popularmovies.activities;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,12 +26,16 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
+import me.kristoprifti.android.popularmovies.handlers.FavoriteMovieQueryHandler;
 import me.kristoprifti.android.popularmovies.models.Movie;
-import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 public class DetailActivity extends AppCompatActivity {
 
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovieApp";
+    private static FavoriteMovieQueryHandler sQueryHandler;
+    private static final int TOKEN_CHECK_IF_FAVORITE = 111;
+    private static final int TOKEN_ADD_TO_FAVORITES = 222;
+    private static final int TOKEN_REMOVE_FROM_FAVORITES = 333;
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.tv_movie_full_title) TextView mMovieFulltitleTextView;
@@ -44,7 +47,6 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.tv_movie_overview) TextView mMovieOverviewTextView;
     @BindView(R.id.iv_movie_backdrop) ImageView mMovieBackdropImageView;
     @BindView(R.id.iv_movie_poster) ImageView mMoviePosterImageView;
-    @BindView(R.id.appbar) AppBarLayout appBarLayout;
     @BindView(R.id.collapsing_toolbar) CollapsingToolbarLayout collapsingToolbarLayout;
     @BindView(R.id.favoriteButton) FloatingActionButton addToFavorites;
 
@@ -71,33 +73,49 @@ public class DetailActivity extends AppCompatActivity {
 
             if (intent.hasExtra(getString(R.string.intent_movie_object))) {
                 final Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
-
-                new AsyncTask<Void, Void, Boolean>() {
-                    @Override
-                    protected Boolean doInBackground(Void... params) {
-                        return NetworkUtils.isMovieFavorite(DetailActivity.this, movie.getMovieId());
-                    }
-
-                    @Override
-                    protected void onPostExecute(final Boolean isFavorite) {
-                        if(isFavorite){
-                            addToFavorites.setImageResource(R.drawable.ic_favorite);
-                        } else {
-                            addToFavorites.setImageResource(R.drawable.ic_not_favorite);
-                        }
-
-                        addToFavorites.setOnClickListener(new View.OnClickListener() {
+                sQueryHandler = new FavoriteMovieQueryHandler(this, new FavoriteMovieQueryHandler.AsyncQueryListener() {
                             @Override
-                            public void onClick(View v) {
-                                if (isFavorite) {
-                                    removeMovieFromFavorites(movie);
-                                } else {
-                                    addMovieToFavorites(movie);
+                            public void onQueryComplete(int token, Object cookie, final Cursor cursor) {
+                                // handle query complete with given cursor
+                                Log.d("DetailActivity", "onQueryComplete: added to favorites " + token);
+                                switch(token){
+                                    case TOKEN_CHECK_IF_FAVORITE:
+                                        if (cursor != null && cursor.getCount() > 0) {
+                                            addToFavorites.setImageResource(R.drawable.ic_favorite);
+                                        } else {
+                                            addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                                        }
+                                        addToFavorites.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                if (cursor != null && cursor.getCount() > 0) {
+                                                    removeMovieFromFavorites(movie);
+                                                } else {
+                                                    addMovieToFavorites(movie);
+                                                }
+                                            }
+                                        });
+                                        break;
+                                    case TOKEN_ADD_TO_FAVORITES:
+                                        addToFavorites.setImageResource(R.drawable.ic_favorite);
+                                        break;
+                                    case TOKEN_REMOVE_FROM_FAVORITES:
+                                        addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                                        break;
+                                    default:
                                 }
                             }
                         });
-                    }
-                }.execute();
+
+                sQueryHandler.startQuery(
+                        TOKEN_CHECK_IF_FAVORITE,
+                        null,
+                        MoviesContract.MoviesEntry.CONTENT_URI,
+                        null,   // projection
+                        MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?", // selection
+                        new String[] { Integer.toString(movie.getMovieId()) },   // selectionArgs
+                        null    // sort order
+                );
 
                 if(getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(movie.getOriginalTitle());
@@ -109,49 +127,30 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void removeMovieFromFavorites(final Movie movie) {
-        new AsyncTask<Void, Void, Integer>() {
-            @Override
-            protected Integer doInBackground(Void... params) {
-                return getContentResolver().delete(
-                        MoviesContract.MoviesEntry.CONTENT_URI,
-                        MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?",
-                        new String[]{Integer.toString(movie.getMovieId())}
-                );
-            }
-
-            @Override
-            protected void onPostExecute(Integer rowsDeleted) {
-                addToFavorites.setImageResource(R.drawable.ic_not_favorite);
-            }
-        }.execute();
+        sQueryHandler.startDelete(TOKEN_REMOVE_FROM_FAVORITES,
+                null,
+                MoviesContract.MoviesEntry.CONTENT_URI,
+                MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{Integer.toString(movie.getMovieId())});
     }
 
     private void addMovieToFavorites(final Movie movie) {
-        new AsyncTask<Void, Void, Uri>() {
-            @Override
-            protected Uri doInBackground(Void... params) {
-                ContentValues values = new ContentValues();
+        ContentValues values = new ContentValues();
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE, movie.getOriginalTitle());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING, movie.getRating());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP, movie.getBackdropPath());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER, movie.getPosterPath());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY, movie.getPopularity());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES, movie.getVoteCount());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getReleaseDate());
+        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE, movie.getOriginalLanguage());
 
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_ID, movie.getMovieId());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE, movie.getOriginalTitle());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING, movie.getRating());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP, movie.getBackdropPath());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER, movie.getPosterPath());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY, movie.getPopularity());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES, movie.getVoteCount());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getReleaseDate());
-                values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE, movie.getOriginalLanguage());
-
-                return getContentResolver().insert(MoviesContract.MoviesEntry.CONTENT_URI,
-                        values);
-            }
-
-            @Override
-            protected void onPostExecute(Uri returnUri) {
-                addToFavorites.setImageResource(R.drawable.ic_favorite);
-            }
-        }.execute();
+        sQueryHandler.startInsert(TOKEN_ADD_TO_FAVORITES,
+                null,
+                MoviesContract.MoviesEntry.CONTENT_URI,
+                values);
     }
 
     private void displayMovieData(Movie movie) {
