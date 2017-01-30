@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -12,7 +13,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,18 +37,30 @@ public class DetailActivity extends AppCompatActivity {
     private static final int TOKEN_ADD_TO_FAVORITES = 222;
     private static final int TOKEN_REMOVE_FROM_FAVORITES = 333;
 
-    @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.tv_movie_full_title) TextView mMovieFulltitleTextView;
-    @BindView(R.id.tv_movie_release_date) TextView mMovieReleaseDateTextView;
-    @BindView(R.id.tv_movie_languge) TextView mMovieOriginalLanguageTextView;
-    @BindView(R.id.tv_movie_popularity) TextView mMoviePopularityTextView;
-    @BindView(R.id.tv_movie_votes) TextView mMovieVotesTextView;
-    @BindView(R.id.tv_movie_rating) TextView mMovieRatingTextView;
-    @BindView(R.id.tv_movie_overview) TextView mMovieOverviewTextView;
-    @BindView(R.id.iv_movie_backdrop) ImageView mMovieBackdropImageView;
-    @BindView(R.id.iv_movie_poster) ImageView mMoviePosterImageView;
-    @BindView(R.id.collapsing_toolbar) CollapsingToolbarLayout collapsingToolbarLayout;
-    @BindView(R.id.favoriteButton) FloatingActionButton addToFavorites;
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+    @BindView(R.id.tv_movie_full_title)
+    TextView mMovieFulltitleTextView;
+    @BindView(R.id.tv_movie_release_date)
+    TextView mMovieReleaseDateTextView;
+    @BindView(R.id.tv_movie_languge)
+    TextView mMovieOriginalLanguageTextView;
+    @BindView(R.id.tv_movie_popularity)
+    TextView mMoviePopularityTextView;
+    @BindView(R.id.tv_movie_votes)
+    TextView mMovieVotesTextView;
+    @BindView(R.id.tv_movie_rating)
+    TextView mMovieRatingTextView;
+    @BindView(R.id.tv_movie_overview)
+    TextView mMovieOverviewTextView;
+    @BindView(R.id.iv_movie_backdrop)
+    ImageView mMovieBackdropImageView;
+    @BindView(R.id.iv_movie_poster)
+    ImageView mMoviePosterImageView;
+    @BindView(R.id.collapsing_toolbar)
+    CollapsingToolbarLayout collapsingToolbarLayout;
+    @BindView(R.id.favoriteButton)
+    FloatingActionButton addToFavorites;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +68,7 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
-        if(getSupportActionBar() != null)
+        if (getSupportActionBar() != null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         ActivityCompat.postponeEnterTransition(this);
@@ -64,7 +76,7 @@ public class DetailActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent != null) {
-            if(intent.hasExtra(getString(R.string.intent_color_integer)) && intent.getIntExtra(getString(R.string.intent_color_integer), 0) != 0) {
+            if (intent.hasExtra(getString(R.string.intent_color_integer)) && intent.getIntExtra(getString(R.string.intent_color_integer), 0) != 0) {
                 colorPalette = intent.getIntExtra(getString(R.string.intent_color_integer), 0);
             } else {
                 colorPalette = R.color.colorPrimary;
@@ -72,58 +84,67 @@ public class DetailActivity extends AppCompatActivity {
             colorizeActivity(colorPalette);
 
             if (intent.hasExtra(getString(R.string.intent_movie_object))) {
-                final Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
-                sQueryHandler = new FavoriteMovieQueryHandler(this, new FavoriteMovieQueryHandler.AsyncQueryListener() {
-                            @Override
-                            public void onQueryComplete(int token, Object cookie, final Cursor cursor) {
-                                // handle query complete with given cursor
-                                Log.d("DetailActivity", "onQueryComplete: added to favorites " + token);
-                                switch(token){
-                                    case TOKEN_CHECK_IF_FAVORITE:
-                                        if (cursor != null && cursor.getCount() > 0) {
-                                            addToFavorites.setImageResource(R.drawable.ic_favorite);
-                                        } else {
-                                            addToFavorites.setImageResource(R.drawable.ic_not_favorite);
-                                        }
-                                        addToFavorites.setOnClickListener(new View.OnClickListener() {
-                                            @Override
-                                            public void onClick(View v) {
-                                                if (cursor != null && cursor.getCount() > 0) {
-                                                    removeMovieFromFavorites(movie);
-                                                } else {
-                                                    addMovieToFavorites(movie);
-                                                }
-                                            }
-                                        });
-                                        break;
-                                    case TOKEN_ADD_TO_FAVORITES:
-                                        addToFavorites.setImageResource(R.drawable.ic_favorite);
-                                        break;
-                                    case TOKEN_REMOVE_FROM_FAVORITES:
-                                        addToFavorites.setImageResource(R.drawable.ic_not_favorite);
-                                        break;
-                                    default:
-                                }
-                            }
-                        });
+                Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
 
-                sQueryHandler.startQuery(
-                        TOKEN_CHECK_IF_FAVORITE,
-                        null,
-                        MoviesContract.MoviesEntry.CONTENT_URI,
-                        null,   // projection
-                        MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?", // selection
-                        new String[] { Integer.toString(movie.getMovieId()) },   // selectionArgs
-                        null    // sort order
-                );
+                initializeQueryHandler(movie);
 
-                if(getSupportActionBar() != null) {
+                if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(movie.getOriginalTitle());
                 }
 
                 displayMovieData(movie);
             }
         }
+    }
+
+    private void initializeQueryHandler(final Movie localMovie) {
+        sQueryHandler = new FavoriteMovieQueryHandler(this, new FavoriteMovieQueryHandler.AsyncQueryListener() {
+            @Override
+            public void onQueryComplete(int token, Object cookie, final Cursor cursor) {
+                // handle query complete with given cursor
+                if (token == TOKEN_CHECK_IF_FAVORITE) {
+                    if (cursor != null && cursor.getCount() > 0) {
+                        addToFavorites.setImageResource(R.drawable.ic_favorite);
+                    } else {
+                        addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                    }
+                    addToFavorites.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (cursor != null && cursor.getCount() > 0) {
+                                removeMovieFromFavorites(localMovie);
+                            } else {
+                                addMovieToFavorites(localMovie);
+                            }
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onInsertComplete(int token, Object cookie, Uri uri) {
+                if(token == TOKEN_ADD_TO_FAVORITES){
+                    addToFavorites.setImageResource(R.drawable.ic_favorite);
+                }
+            }
+
+            @Override
+            public void onDeleteComplete(int token, Object cookie, int result) {
+                if(token == TOKEN_REMOVE_FROM_FAVORITES){
+                    addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                }
+            }
+        });
+
+        sQueryHandler.startQuery(
+                TOKEN_CHECK_IF_FAVORITE,
+                null,
+                MoviesContract.MoviesEntry.CONTENT_URI,
+                null,   // projection
+                MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?", // selection
+                new String[]{Integer.toString(localMovie.getMovieId())},   // selectionArgs
+                null    // sort order
+        );
     }
 
     private void removeMovieFromFavorites(final Movie movie) {
@@ -176,7 +197,7 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     //get color from Palette API
-    private void colorizeActivity(int colorPalette){
+    private void colorizeActivity(int colorPalette) {
         //set the 500 color to the collapsing toolbar
         collapsingToolbarLayout.setContentScrimColor(colorPalette);
         collapsingToolbarLayout.setBackgroundColor(colorPalette);
