@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements
 
     /* This ArrayList will hold and help cache our movies data */
     private ArrayList<Movie> mMoviesList;
+    private int pageNumber = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -189,7 +190,8 @@ public class MainActivity extends AppCompatActivity implements
                 if(PopularMoviesPreferences.getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
                     return NetworkUtils.requestFavoriteMovies(MainActivity.this);
                 } else {
-                    return NetworkUtils.requestMovieFromServer(PopularMoviesPreferences.getPreferredSortType(MainActivity.this));
+                    return NetworkUtils.requestMovieFromServer(PopularMoviesPreferences.getPreferredSortType(MainActivity.this),
+                            pageNumber);
                 }
             }
 

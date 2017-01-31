@@ -67,6 +67,7 @@ public class NetworkUtils {
     /* The number of days we want our API to return */
     private static final String API_KEY = "9693818fe54e358d73e741ec1472912a";
     private final static String API_KEY_PARAM = "api_key";
+    private final static String PAGE_PARAM = "page";
 
     /**
      * Builds the URL used to talk to the movies server using an API KEY.
@@ -74,10 +75,11 @@ public class NetworkUtils {
      * @param orderBy The parameter that will be queried by.
      * @return The URL to use to query the movie server.
      */
-    private static URL buildUrl(String orderBy) {
+    private static URL buildUrl(String orderBy, int pageNumber) {
         Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                 .appendPath(orderBy)
                 .appendQueryParameter(API_KEY_PARAM, API_KEY)
+                .appendQueryParameter(PAGE_PARAM, String.valueOf(pageNumber))
                 .build();
 
         URL url = null;
@@ -147,8 +149,8 @@ public class NetworkUtils {
         }
     }
 
-    public static ArrayList<Movie> requestMovieFromServer(String orderBy){
-        URL movieRequestUrl = NetworkUtils.buildUrl(orderBy);
+    public static ArrayList<Movie> requestMovieFromServer(String orderBy, int pageNumber){
+        URL movieRequestUrl = NetworkUtils.buildUrl(orderBy, pageNumber);
         try {
             String jsonMovieResponse = NetworkUtils
                     .getResponseFromHttpUrl(movieRequestUrl);
