@@ -207,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements
                 if (mMoviesList.size() == 0) {
                     mLoadingIndicator.setVisibility(View.VISIBLE);
                     forceLoad();
-                } else if(MOVIE_LOADER_ID == id && !backFromUnchangedSettings){
+                } else if(MOVIE_LOAD_MORE_ID == id && !backFromUnchangedSettings){
                     backFromUnchangedSettings = false;
                     forceLoad();
                 }
