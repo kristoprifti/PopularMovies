@@ -55,11 +55,17 @@ public class MainActivity extends AppCompatActivity implements
     @BindView(R.id.toolbar) Toolbar toolbar;
 
     private static final int MOVIE_LOADER_ID = 111;
+    private static final int MOVIE_LOAD_MORE_ID = 222;
     private static boolean PREFERENCES_HAVE_BEEN_UPDATED = false;
 
     /* This ArrayList will hold and help cache our movies data */
     private ArrayList<Movie> mMoviesList;
+    private ArrayList<Movie> mMoviesListPerPage;
     private int pageNumber = 1;
+
+    private boolean loading = true;
+    private boolean backFromUnchangedSettings = false;
+    private int pastVisiblesItems, visibleItemCount, totalItemCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
+        mMoviesList = new ArrayList<>();
         /*
          * A GridLayoutManager is responsible for measuring and positioning item views within a
          * RecyclerView into a grid list. This means that it can produce either a horizontal or
@@ -77,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements
          * GridLayoutManager class for vertical lists, GridLayoutManager.VERTICAL.
          */
         int recyclerViewOrientation = GridLayoutManager.VERTICAL;
-        GridLayoutManager layoutManager;
+        final GridLayoutManager layoutManager;
         /*
          * check if the device is landscape or portrait mode
          * if its portrait show 2 columns if its landscape show 4
@@ -109,12 +116,42 @@ public class MainActivity extends AppCompatActivity implements
             mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
         }
 
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener()
+        {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy)
+            {
+                super.onScrolled(recyclerView, dx, dy);
+                Log.d(TAG, "onScrolled: " + dy);
+                if(dy > 0) //check for scroll down
+                {
+                    visibleItemCount = layoutManager.getChildCount();
+                    totalItemCount = layoutManager.getItemCount();
+                    pastVisiblesItems = layoutManager.findFirstVisibleItemPosition();
+
+                    if(loading){
+                        if ((visibleItemCount + pastVisiblesItems) >= totalItemCount)
+                        {
+                            loading = false;
+                            ++pageNumber;
+                            getSupportLoaderManager().restartLoader(MOVIE_LOAD_MORE_ID, null, MainActivity.this);
+                        }
+                    }
+                }
+            }
+        });
+
         /*
          * initializing the loader
          */
         if(!PopularMoviesPreferences
                 .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
-            if (mMoviesList == null) {
+            if (mMoviesList.size() == 0) {
                 initLoader();
             } else {
                 getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
@@ -159,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements
      * @return Return a new Loader instance that is ready to start loading.
      */
     @Override
-    public Loader<ArrayList<Movie>> onCreateLoader(int id, final Bundle loaderArgs) {
+    public Loader<ArrayList<Movie>> onCreateLoader(final int id, final Bundle loaderArgs) {
         Log.d(TAG, "onCreateLoader: starts");
         return new AsyncTaskLoader<ArrayList<Movie>>(this) {
             /**
@@ -167,12 +204,11 @@ public class MainActivity extends AppCompatActivity implements
              */
             @Override
             protected void onStartLoading() {
-                if (mMoviesList != null) {
-                    Log.d(TAG, "onStartLoading: list exists");
-                    deliverResult(mMoviesList);
-                } else {
-                    Log.d(TAG, "onStartLoading: list doesnt exits");
+                if (mMoviesList.size() == 0) {
                     mLoadingIndicator.setVisibility(View.VISIBLE);
+                    forceLoad();
+                } else if(MOVIE_LOADER_ID == id && !backFromUnchangedSettings){
+                    backFromUnchangedSettings = false;
                     forceLoad();
                 }
             }
@@ -202,14 +238,12 @@ public class MainActivity extends AppCompatActivity implements
              */
             public void deliverResult(ArrayList<Movie> data) {
                 Log.d(TAG, "deliverResult: starts");
-                mMoviesList = data;
-                super.deliverResult(data);
+                mMoviesListPerPage = data;
+                super.deliverResult(mMoviesListPerPage);
                 Log.d(TAG, "deliverResult: ends");
             }
         };
     }
-
-
 
     /**
      * Called when a previously created loader has finished its load.
@@ -221,8 +255,9 @@ public class MainActivity extends AppCompatActivity implements
     public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> data) {
         Log.d(TAG, "onLoadFinished: starts");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
-        mMovieAdapter.setMoviesList(data);
-        if (data == null) {
+        mMoviesList.addAll(data);
+        mMovieAdapter.setMoviesList(mMoviesList);
+        if (mMoviesList == null) {
             Log.d(TAG, "onLoadFinished: show error");
             showErrorMessage();
         } else if (data.size() == 0) {
@@ -251,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     private void invalidateData() {
         Log.d(TAG, "invalidateData: starts");
-        mMoviesList = null;
+        mMoviesList = new ArrayList<>();
         mMovieAdapter.setMoviesList(null);
         Log.d(TAG, "invalidateData: ends");
     }
@@ -358,6 +393,7 @@ public class MainActivity extends AppCompatActivity implements
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
+            backFromUnchangedSettings = true;
             Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
             startActivity(startSettingsActivity);
             return true;
