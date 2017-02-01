@@ -14,6 +14,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.GridLayoutManager;
@@ -51,8 +52,10 @@ public class MainActivity extends AppCompatActivity implements
 
     @BindView(R.id.rv_movies) RecyclerView mRecyclerView;
     @BindView(R.id.pb_loading_indicator) ProgressBar mLoadingIndicator;
+    @BindView(R.id.pb_load_more_indicator) ProgressBar mLoadingMoreIndicator;
     @BindView(R.id.mainView) FrameLayout mainView;
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.nestedScrollView) NestedScrollView mNestedScrollView;
 
     private static final int MOVIE_LOADER_ID = 111;
     private static final int MOVIE_LOAD_MORE_ID = 222;
@@ -65,7 +68,6 @@ public class MainActivity extends AppCompatActivity implements
 
     private boolean loading = true;
     private boolean backFromUnchangedSettings = false;
-    private int pastVisiblesItems, visibleItemCount, totalItemCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,31 +118,14 @@ public class MainActivity extends AppCompatActivity implements
             mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
         }
 
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener()
-        {
+        mNestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-            }
-
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy)
-            {
-                super.onScrolled(recyclerView, dx, dy);
-                Log.d(TAG, "onScrolled: " + dy);
-                if(dy > 0) //check for scroll down
-                {
-                    visibleItemCount = layoutManager.getChildCount();
-                    totalItemCount = layoutManager.getItemCount();
-                    pastVisiblesItems = layoutManager.findFirstVisibleItemPosition();
-
+            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                if (scrollY == (v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight())) {
                     if(loading){
-                        if ((visibleItemCount + pastVisiblesItems) >= totalItemCount)
-                        {
-                            loading = false;
-                            ++pageNumber;
-                            getSupportLoaderManager().restartLoader(MOVIE_LOAD_MORE_ID, null, MainActivity.this);
-                        }
+                        loading = false;
+                        ++pageNumber;
+                        getSupportLoaderManager().restartLoader(MOVIE_LOAD_MORE_ID, null, MainActivity.this);
                     }
                 }
             }
@@ -208,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements
                     mLoadingIndicator.setVisibility(View.VISIBLE);
                     forceLoad();
                 } else if(MOVIE_LOAD_MORE_ID == id && !backFromUnchangedSettings){
+                    mLoadingMoreIndicator.setVisibility(View.VISIBLE);
                     backFromUnchangedSettings = false;
                     forceLoad();
                 }
@@ -255,6 +241,7 @@ public class MainActivity extends AppCompatActivity implements
     public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> data) {
         Log.d(TAG, "onLoadFinished: starts");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
+        mLoadingMoreIndicator.setVisibility(View.GONE);
         mMoviesList.addAll(data);
         mMovieAdapter.setMoviesList(mMoviesList);
         if (mMoviesList == null) {
@@ -268,6 +255,7 @@ public class MainActivity extends AppCompatActivity implements
             showMovieDataView();
         }
         Log.d(TAG, "onLoadFinished: ends");
+        loading = true;
     }
 
     /**

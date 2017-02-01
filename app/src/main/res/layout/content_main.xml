@@ -6,6 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     app:behavior_overlapTop="64dp"
+    android:id="@+id/nestedScrollView"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <FrameLayout
@@ -13,12 +14,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/rv_movies"
-            android:nestedScrollingEnabled="false"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:targetApi="lollipop" />
+            android:orientation="vertical">
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rv_movies"
+                android:nestedScrollingEnabled="false"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:targetApi="lollipop" />
+
+            <ProgressBar
+                android:layout_margin="10dp"
+                android:id="@+id/pb_load_more_indicator"
+                android:layout_height="42dp"
+                android:layout_width="42dp"
+                android:layout_gravity="center_horizontal|bottom"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
         <ProgressBar
             android:id="@+id/pb_loading_indicator"
