@@ -13,6 +13,8 @@ import java.util.ArrayList;
 
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import me.kristoprifti.android.popularmovies.models.Movie;
+import me.kristoprifti.android.popularmovies.models.Review;
+import me.kristoprifti.android.popularmovies.models.Trailer;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -32,6 +34,9 @@ public class NetworkUtils {
     private static final String STATIC_PICTURE_PHONE_MEDIUM_SIZE = "w342";
     private static final String STATIC_PICTURE_PHONE_LARGE_SIZE = "w500";
     private static final String STATIC_PICTURE_TABLET_SIZE = "w780";
+
+    private static final String STATIC_TRAILER_PATH = "videos";
+    private static final String STATIC_REVIEW_PATH = "reviews";
 
     private static final String MOVIE_BASE_URL = STATIC_MOVIE_URL;
 
@@ -80,6 +85,40 @@ public class NetworkUtils {
                 .appendPath(orderBy)
                 .appendQueryParameter(API_KEY_PARAM, API_KEY)
                 .appendQueryParameter(PAGE_PARAM, String.valueOf(pageNumber))
+                .build();
+
+        URL url = null;
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return url;
+    }
+
+    private static URL buildTrailerUrl(String movieId) {
+        Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                .appendPath(movieId)
+                .appendPath(STATIC_TRAILER_PATH)
+                .appendQueryParameter(API_KEY_PARAM, API_KEY)
+                .build();
+
+        URL url = null;
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        return url;
+    }
+
+    private static URL buildReviewUrl(String movieId) {
+        Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
+                .appendPath(movieId)
+                .appendPath(STATIC_REVIEW_PATH)
+                .appendQueryParameter(API_KEY_PARAM, API_KEY)
                 .build();
 
         URL url = null;
@@ -179,5 +218,31 @@ public class NetworkUtils {
             cursor.close();
         }
         return favoriteMoviesList;
+    }
+
+    public static ArrayList<Trailer> requestTrailerFromServer(String movieId){
+        URL trailerRequestUrl = NetworkUtils.buildTrailerUrl(movieId);
+        try {
+            String jsonTrailerResponse = NetworkUtils
+                    .getResponseFromHttpUrl(trailerRequestUrl);
+            return MovieDBJsonUtils
+                    .getSimpleTrailerStringsFromJson(jsonTrailerResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static ArrayList<Review> requestReviewFromServer(String movieId){
+        URL reviewRequestUrl = NetworkUtils.buildReviewUrl(movieId);
+        try {
+            String jsonReviewResponse = NetworkUtils
+                    .getResponseFromHttpUrl(reviewRequestUrl);
+            return MovieDBJsonUtils
+                    .getSimpleReviewStringsFromJson(jsonReviewResponse);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

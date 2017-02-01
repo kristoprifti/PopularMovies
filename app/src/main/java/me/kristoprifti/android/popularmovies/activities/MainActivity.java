@@ -265,7 +265,6 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public void onLoaderReset(Loader<ArrayList<Movie>> loader) {
-
     }
 
     /**
@@ -397,6 +396,7 @@ public class MainActivity extends AppCompatActivity implements
          * data.
          */
         PREFERENCES_HAVE_BEEN_UPDATED = true;
+        pageNumber = 1;
     }
 
     /*Check if app is connected to the internet*/

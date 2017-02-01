@@ -3,9 +3,12 @@ package me.kristoprifti.android.popularmovies.utilities;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 
 import me.kristoprifti.android.popularmovies.models.Movie;
+import me.kristoprifti.android.popularmovies.models.Review;
+import me.kristoprifti.android.popularmovies.models.Trailer;
 
 /**
  * Utility functions to handle TheMovieDB Map JSON data.
@@ -80,5 +83,93 @@ class MovieDBJsonUtils {
         }
 
         return parsedMovieData;
+    }
+
+    static ArrayList<Trailer> getSimpleTrailerStringsFromJson(String trailerJsonStr)
+            throws JSONException {
+
+        /* trailer information. Each trailer info is an element of the "results" array */
+        final String TRAILERS_LIST = "results";
+
+        /*Each separate information for the trailer object*/
+        final String TRAILERS_ID = "id";
+        final String TRAILERS_NAME = "name";
+        final String TRAILERS_KEY = "key";
+
+        /* Arraylist of trailer objects to hold each trailer object */
+        ArrayList<Trailer> parsedTrailerData;
+
+        JSONObject trailerJson = new JSONObject(trailerJsonStr);
+
+        /* Is there an error? */
+        if (trailerJson.getJSONArray(TRAILERS_LIST).length() == 0) {
+            return null;
+        }
+
+        JSONArray trailersArray = trailerJson.getJSONArray(TRAILERS_LIST);
+
+        parsedTrailerData = new ArrayList<>();
+
+        for (int i = 0; i < trailersArray.length(); i++) {
+            /* Get the JSON object representing one trailer */
+            JSONObject currentTrailerJSON = trailersArray.getJSONObject(i);
+
+            /* Get each property of JSON Object neccessary to create the trailer Model*/
+            String trailerID = currentTrailerJSON.getString(TRAILERS_ID);
+            String trailerName = currentTrailerJSON.getString(TRAILERS_NAME);
+            String trailerKey = currentTrailerJSON.getString(TRAILERS_KEY);
+
+            /*Create a new trailer object with all the fields retrieved*/
+            Trailer newTrailer = new Trailer(trailerID, trailerName, trailerKey);
+
+            /*Add the newly created trailer object to the arrayList in order to be returned to the adapter*/
+            parsedTrailerData.add(newTrailer);
+        }
+
+        return parsedTrailerData;
+    }
+
+    static ArrayList<Review> getSimpleReviewStringsFromJson(String reviewJsonStr)
+            throws JSONException {
+
+        /* Review information. Each Review info is an element of the "results" array */
+        final String REVIEWS_LIST = "results";
+
+        /*Each separate information for the trailer object*/
+        final String REVIEWS_ID = "id";
+        final String REVIEWS_AUTHOR = "author";
+        final String REVIEWS_CONTENT = "content";
+
+        /* Arraylist of Review objects to hold each Review object */
+        ArrayList<Review> parsedReviewData;
+
+        JSONObject reviewJson = new JSONObject(reviewJsonStr);
+
+        /* Is there an error? */
+        if (reviewJson.getJSONArray(REVIEWS_LIST).length() == 0) {
+            return null;
+        }
+
+        JSONArray reviewsArray = reviewJson.getJSONArray(REVIEWS_LIST);
+
+        parsedReviewData = new ArrayList<>();
+
+        for (int i = 0; i < reviewsArray.length(); i++) {
+            /* Get the JSON object representing one Review */
+            JSONObject currentReviewJSON = reviewsArray.getJSONObject(i);
+
+            /* Get each property of JSON Object neccessary to create the Review Model*/
+            String reviewID = currentReviewJSON.getString(REVIEWS_ID);
+            String reviewAuthor = currentReviewJSON.getString(REVIEWS_AUTHOR);
+            String reviewContent = currentReviewJSON.getString(REVIEWS_CONTENT);
+
+            /*Create a new Review object with all the fields retrieved*/
+            Review newReview = new Review(reviewID, reviewAuthor, reviewContent);
+
+            /*Add the newly created Review object to the arrayList in order to be returned to the adapter*/
+            parsedReviewData.add(newReview);
+        }
+
+        return parsedReviewData;
     }
 }
