@@ -13,7 +13,7 @@ import me.kristoprifti.android.popularmovies.models.Trailer;
 /**
  * Utility functions to handle TheMovieDB Map JSON data.
  */
-class MovieDBJsonUtils {
+public class MovieDBJsonUtils {
 
     /**
      * This method parses JSON from a web response and returns an ArrayList of Movie objects
@@ -25,7 +25,7 @@ class MovieDBJsonUtils {
      *
      * @throws JSONException If JSON data cannot be properly parsed
      */
-    static ArrayList<Movie> getSimpleMovieStringsFromJson(String movieJsonStr)
+    public static ArrayList<Movie> getSimpleMovieStringsFromJson(String movieJsonStr)
             throws JSONException {
 
         /* Movie information. Each movie info is an element of the "results" array */

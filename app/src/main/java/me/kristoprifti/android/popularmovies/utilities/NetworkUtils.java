@@ -13,8 +13,8 @@ import java.util.ArrayList;
 
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import me.kristoprifti.android.popularmovies.models.Movie;
-import me.kristoprifti.android.popularmovies.models.Review;
-import me.kristoprifti.android.popularmovies.models.Trailer;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -74,13 +74,19 @@ public class NetworkUtils {
     private final static String API_KEY_PARAM = "api_key";
     private final static String PAGE_PARAM = "page";
 
+    private static OnDownloadComplete mOnDownloadComplete;
+
+    public interface OnDownloadComplete {
+        void onDownloadComplete(String responseString);
+    }
+
     /**
      * Builds the URL used to talk to the movies server using an API KEY.
      *
      * @param orderBy The parameter that will be queried by.
      * @return The URL to use to query the movie server.
      */
-    private static URL buildUrl(String orderBy, int pageNumber) {
+    public static URL buildUrl(String orderBy, int pageNumber) {
         Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                 .appendPath(orderBy)
                 .appendQueryParameter(API_KEY_PARAM, API_KEY)
@@ -97,7 +103,7 @@ public class NetworkUtils {
         return url;
     }
 
-    private static URL buildTrailerUrl(String movieId) {
+    public static URL buildTrailerUrl(String movieId) {
         Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                 .appendPath(movieId)
                 .appendPath(STATIC_TRAILER_PATH)
@@ -114,7 +120,7 @@ public class NetworkUtils {
         return url;
     }
 
-    private static URL buildReviewUrl(String movieId) {
+    public static URL buildReviewUrl(String movieId) {
         Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
                 .appendPath(movieId)
                 .appendPath(STATIC_REVIEW_PATH)
@@ -167,38 +173,27 @@ public class NetworkUtils {
      * This method returns the entire result from the HTTP response.
      *
      * @param url The URL to fetch the HTTP response from.
-     * @return The contents of the HTTP response.
      * @throws IOException Related to network and stream reading
      */
-    private static String getResponseFromHttpUrl(URL url) throws IOException {
+    public static void getResponseFromHttpUrl(URL url, OnDownloadComplete onDownloadComplete) throws IOException {
+        mOnDownloadComplete = onDownloadComplete;
         //implemented the OKHttp library to communicate with the Movie DB servers
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(url)
                 .build();
 
-        Response response = null;
-        try {
-            response = client.newCall(request).execute();
-            return response.body().string();
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-        }
-    }
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
 
-    public static ArrayList<Movie> requestMovieFromServer(String orderBy, int pageNumber){
-        URL movieRequestUrl = NetworkUtils.buildUrl(orderBy, pageNumber);
-        try {
-            String jsonMovieResponse = NetworkUtils
-                    .getResponseFromHttpUrl(movieRequestUrl);
-            return MovieDBJsonUtils
-                    .getSimpleMovieStringsFromJson(jsonMovieResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                mOnDownloadComplete.onDownloadComplete(response.body().string());
+            }
+        });
     }
 
     public static ArrayList<Movie> requestFavoriteMovies(Context context){
@@ -220,7 +215,7 @@ public class NetworkUtils {
         return favoriteMoviesList;
     }
 
-    public static ArrayList<Trailer> requestTrailerFromServer(String movieId){
+    /*public static ArrayList<Trailer> requestTrailerFromServer(String movieId){
         URL trailerRequestUrl = NetworkUtils.buildTrailerUrl(movieId);
         try {
             String jsonTrailerResponse = NetworkUtils
@@ -244,5 +239,5 @@ public class NetworkUtils {
             e.printStackTrace();
             return null;
         }
-    }
+    }*/
 }

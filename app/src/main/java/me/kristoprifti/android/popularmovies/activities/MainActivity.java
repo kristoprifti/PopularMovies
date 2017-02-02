@@ -31,6 +31,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.json.JSONException;
+
+import java.net.URL;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -39,12 +42,14 @@ import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.adapters.MovieAdapter;
 import me.kristoprifti.android.popularmovies.data.PopularMoviesPreferences;
 import me.kristoprifti.android.popularmovies.models.Movie;
+import me.kristoprifti.android.popularmovies.utilities.MovieDBJsonUtils;
 import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
 public class MainActivity extends AppCompatActivity implements
         MovieAdapter.MovieAdapterOnClickHandler,
         LoaderManager.LoaderCallbacks<ArrayList<Movie>>,
-        SharedPreferences.OnSharedPreferenceChangeListener {
+        SharedPreferences.OnSharedPreferenceChangeListener,
+        NetworkUtils.OnDownloadComplete{
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private MovieAdapter mMovieAdapter;
@@ -58,16 +63,13 @@ public class MainActivity extends AppCompatActivity implements
     @BindView(R.id.nestedScrollView) NestedScrollView mNestedScrollView;
 
     private static final int MOVIE_LOADER_ID = 111;
-    private static final int MOVIE_LOAD_MORE_ID = 222;
     private static boolean PREFERENCES_HAVE_BEEN_UPDATED = false;
 
     /* This ArrayList will hold and help cache our movies data */
     private ArrayList<Movie> mMoviesList;
-    private ArrayList<Movie> mMoviesListPerPage;
     private int pageNumber = 1;
 
     private boolean loading = true;
-    private boolean backFromUnchangedSettings = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,32 +117,28 @@ public class MainActivity extends AppCompatActivity implements
         mRecyclerView.setAdapter(mMovieAdapter);
 
         if(savedInstanceState != null && savedInstanceState.containsKey(getString(R.string.movies_key))) {
+            Log.d(TAG, "onCreate: there is savedinstancestate");
             mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
-        }
+            mMovieAdapter.setMoviesList(mMoviesList);
+            addScrollListenerToNestedScrollView();
 
-        mNestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
-            @Override
-            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == (v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight())) {
-                    if(loading){
-                        loading = false;
-                        ++pageNumber;
-                        getSupportLoaderManager().restartLoader(MOVIE_LOAD_MORE_ID, null, MainActivity.this);
+            final int[] position = savedInstanceState.getIntArray(getString(R.string.scroll_position_key));
+            if(position != null)
+                mNestedScrollView.post(new Runnable() {
+                    public void run() {
+                        mNestedScrollView.smoothScrollTo(position[0], position[1]);
                     }
-                }
-            }
-        });
-
-        /*
-         * initializing the loader
-         */
-        if(!PopularMoviesPreferences
+                });
+        } else if(!PopularMoviesPreferences
                 .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
             if (mMoviesList.size() == 0) {
-                initLoader();
-            } else {
-                getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+                Log.d(TAG, "onCreate: load from server");
+                addScrollListenerToNestedScrollView();
+                loadMoviesFromServer();
             }
+        } else {
+            Log.d(TAG, "onCreate: load from loader");
+            getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
         }
 
         Log.d(TAG, "onCreate: registering on preference changed listener");
@@ -154,20 +152,27 @@ public class MainActivity extends AppCompatActivity implements
         Log.d(TAG, "onCreate: ends");
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if(PopularMoviesPreferences
-                .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
-            invalidateData();
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
-        }
+    private void addScrollListenerToNestedScrollView(){
+        mNestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                if (scrollY == (v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight())) {
+                    if(loading){
+                        loading = false;
+                        ++pageNumber;
+                        loadMoviesFromServer();
+                    }
+                }
+            }
+        });
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         Log.d(TAG, "onSaveInstanceState: starts");
         outState.putParcelableArrayList(getString(R.string.movies_key), mMoviesList);
+        outState.putIntArray(getString(R.string.scroll_position_key),
+                new int[]{ mNestedScrollView.getScrollX(), mNestedScrollView.getScrollY()});
         super.onSaveInstanceState(outState);
         Log.d(TAG, "onSaveInstanceState: ends");
     }
@@ -183,52 +188,34 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public Loader<ArrayList<Movie>> onCreateLoader(final int id, final Bundle loaderArgs) {
         Log.d(TAG, "onCreateLoader: starts");
-        return new AsyncTaskLoader<ArrayList<Movie>>(this) {
-            /**
-             * Subclasses of AsyncTaskLoader must implement this to take care of loading their data.
-             */
-            @Override
-            protected void onStartLoading() {
-                if (mMoviesList.size() == 0) {
+        if(id == MOVIE_LOADER_ID){
+            return new AsyncTaskLoader<ArrayList<Movie>>(this) {
+                /**
+                 * Subclasses of AsyncTaskLoader must implement this to take care of loading their data.
+                 */
+                @Override
+                protected void onStartLoading() {
+                    Log.d(TAG, "onStartLoading: starts");
                     mLoadingIndicator.setVisibility(View.VISIBLE);
                     forceLoad();
-                } else if(MOVIE_LOAD_MORE_ID == id && !backFromUnchangedSettings){
-                    mLoadingMoreIndicator.setVisibility(View.VISIBLE);
-                    backFromUnchangedSettings = false;
-                    forceLoad();
                 }
-            }
 
-            /**
-             * This is the method of the AsyncTaskLoader that will load and parse the JSON data
-             * from TheMovieDB in the background.
-             *
-             * @return Movie data from TheMovieDB as an ArrayList of Movie objects.
-             *         null if an error occurs
-             */
-            @Override
-            public ArrayList<Movie> loadInBackground() {
-                Log.d(TAG, "loadInBackground: starts");
-                if(PopularMoviesPreferences.getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
+                /**
+                 * This is the method of the AsyncTaskLoader that will load and parse the JSON data
+                 * from TheMovieDB in the background.
+                 *
+                 * @return Movie data from TheMovieDB as an ArrayList of Movie objects.
+                 *         null if an error occurs
+                 */
+                @Override
+                public ArrayList<Movie> loadInBackground() {
+                    Log.d(TAG, "loadInBackground: starts");
                     return NetworkUtils.requestFavoriteMovies(MainActivity.this);
-                } else {
-                    return NetworkUtils.requestMovieFromServer(PopularMoviesPreferences.getPreferredSortType(MainActivity.this),
-                            pageNumber);
                 }
-            }
-
-            /**
-             * Sends the result of the load to the registered listener.
-             *
-             * @param data The result of the load
-             */
-            public void deliverResult(ArrayList<Movie> data) {
-                Log.d(TAG, "deliverResult: starts");
-                mMoviesListPerPage = data;
-                super.deliverResult(mMoviesListPerPage);
-                Log.d(TAG, "deliverResult: ends");
-            }
-        };
+            };
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -241,21 +228,20 @@ public class MainActivity extends AppCompatActivity implements
     public void onLoadFinished(Loader<ArrayList<Movie>> loader, ArrayList<Movie> data) {
         Log.d(TAG, "onLoadFinished: starts");
         mLoadingIndicator.setVisibility(View.INVISIBLE);
-        mLoadingMoreIndicator.setVisibility(View.GONE);
-        mMoviesList.addAll(data);
-        mMovieAdapter.setMoviesList(mMoviesList);
-        if (mMoviesList == null) {
-            Log.d(TAG, "onLoadFinished: show error");
-            showErrorMessage();
-        } else if (data.size() == 0) {
-            Log.d(TAG, "onLoadFinished: no favorite movies yet");
+        if (data != null && data.size() != 0) {
+            mMoviesList.addAll(data);
+            mMovieAdapter.setMoviesList(mMoviesList);
+            showMovieDataView();
+            Log.d(TAG, "onLoadFinished: show data");
+        } else if (data == null || data.size() == 0){
+            Log.d(TAG, "onLoadFinished: show empty message");
             showNoFavoritesMessage();
         } else {
-            Log.d(TAG, "onLoadFinished: show data");
-            showMovieDataView();
+            Log.d(TAG, "onLoadFinished: show error querying data");
+            showErrorMessage();
         }
         Log.d(TAG, "onLoadFinished: ends");
-        loading = true;
+        getSupportLoaderManager().destroyLoader(loader.getId());
     }
 
     /**
@@ -351,7 +337,15 @@ public class MainActivity extends AppCompatActivity implements
         if (PREFERENCES_HAVE_BEEN_UPDATED) {
             Log.d(TAG, "onStart: preferences were updated");
             invalidateData();
-            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+            if(!PopularMoviesPreferences
+                    .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
+                Log.d(TAG, "onStart: loader destroyed");
+                //getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
+                loadMoviesFromServer();
+            } else {
+                Log.d(TAG, "onStart: loader started");
+                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+            }
             PREFERENCES_HAVE_BEEN_UPDATED = false;
         }
     }
@@ -380,7 +374,6 @@ public class MainActivity extends AppCompatActivity implements
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
-            backFromUnchangedSettings = true;
             Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
             startActivity(startSettingsActivity);
             return true;
@@ -400,18 +393,14 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /*Check if app is connected to the internet*/
-    public void initLoader() {
+    public boolean checkInternetConnection() {
         //get connectivity manager in order to check the network status
         ConnectivityManager cm =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         //if there is internet then we initialize the loader
         //in case of no internet connection we notify the user through a snackBar
-        if (netInfo != null && netInfo.isConnectedOrConnecting()){
-            getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
-        } else {
-            showSnackBar(getString(R.string.no_internet), true);
-        }
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     private void showSnackBar(String message, boolean action){
@@ -420,7 +409,12 @@ public class MainActivity extends AppCompatActivity implements
             snackbar.setAction(R.string.action_retry, new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    initLoader();
+                    if(PopularMoviesPreferences
+                            .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
+                        getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, MainActivity.this);
+                    } else {
+                        loadMoviesFromServer();
+                    }
                 }
             });
             // Changing message text color
@@ -437,5 +431,52 @@ public class MainActivity extends AppCompatActivity implements
         textView.setTextColor(Color.WHITE);
 
         snackbar.show();
+    }
+
+    private void loadMoviesFromServer(){
+        Log.d(TAG, "loadMoviesFromServer: starts");
+        if(checkInternetConnection()){
+            if(pageNumber > 1){
+                mLoadingMoreIndicator.setVisibility(View.VISIBLE);
+            } else {
+                mLoadingIndicator.setVisibility(View.VISIBLE);
+            }
+            URL movieRequestUrl = NetworkUtils.buildUrl(PopularMoviesPreferences.getPreferredSortType(MainActivity.this), pageNumber);
+            try {
+                NetworkUtils.getResponseFromHttpUrl(movieRequestUrl, this);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            showSnackBar(getString(R.string.no_internet), true);
+        }
+        Log.d(TAG, "loadMoviesFromServer: ends");
+    }
+
+    @Override
+    public void onDownloadComplete(String responseString) {
+        Log.d(TAG, "onDownloadComplete: starts");
+        try {
+            ArrayList<Movie> mMoviesLocal = MovieDBJsonUtils.getSimpleMovieStringsFromJson(responseString);
+            if (mMoviesLocal != null) {
+                mMoviesList.addAll(mMoviesLocal);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mMovieAdapter.setMoviesList(mMoviesList);
+                        loading = true;
+                        if(pageNumber > 1){
+                            mLoadingMoreIndicator.setVisibility(View.INVISIBLE);
+                        } else {
+                            mLoadingIndicator.setVisibility(View.INVISIBLE);
+                        }
+                        showMovieDataView();
+                    }
+                });
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "onDownloadComplete: ends");
     }
 }
