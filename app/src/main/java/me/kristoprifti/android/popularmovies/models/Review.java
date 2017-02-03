@@ -60,4 +60,16 @@ public class Review implements Parcelable {
             return new Review[i];
         }
     };
+
+    public String getReviewId() {
+        return reviewId;
+    }
+
+    public String getReviewAuthor() {
+        return reviewAuthor;
+    }
+
+    public String getReviewContent() {
+        return reviewContent;
+    }
 }

@@ -32,6 +32,7 @@ public class TrailersContract {
         public static final String COLUMN_TRAILER_ID = "trailer_id";
         public static final String COLUMN_TRAILER_NAME = "name";
         public static final String COLUMN_TRAILER_KEY = "key";
+        public static final String COLUMN_MOVIE_ID = "movie_id";
 
         static Uri buildTrailerUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

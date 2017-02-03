@@ -31,6 +31,7 @@ public class ReviewsContract {
         public static final String COLUMN_REVIEW_ID = "review_id";
         public static final String COLUMN_REVIEW_AUTHOR = "author";
         public static final String COLUMN_REVIEW_CONTENT = "content";
+        public static final String COLUMN_MOVIE_ID = "movie_id";
 
         static Uri buildReviewUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);

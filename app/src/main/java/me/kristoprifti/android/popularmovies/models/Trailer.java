@@ -60,4 +60,16 @@ public class Trailer implements Parcelable{
             return new Trailer[i];
         }
     };
+
+    public String getTrailerId() {
+        return trailerId;
+    }
+
+    public String getTrailerName() {
+        return trailerName;
+    }
+
+    public String getTrailerKey() {
+        return trailerKey;
+    }
 }
