@@ -51,8 +51,8 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
      * Cache of the children views for a forecast list item.
      */
     class TrailerAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        @BindView(R.id.tv_movie_full_title)
-        TextView mMovieTitleTextView;
+        @BindView(R.id.trailerNameTextView)
+        TextView mTrailerNameTextView;
 
         TrailerAdapterViewHolder(View view) {
             super(view);
@@ -85,7 +85,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
     @Override
     public TrailerAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         mContext = viewGroup.getContext();
-        int layoutIdForListItem = android.R.layout.simple_list_item_1;
+        int layoutIdForListItem = R.layout.trailer_item_row;
         LayoutInflater inflater = LayoutInflater.from(mContext);
 
         View view = inflater.inflate(layoutIdForListItem, viewGroup, false);
@@ -103,7 +103,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(final TrailerAdapterViewHolder trailerAdapterViewHolder, @SuppressLint("RecyclerView") final int position) {
-        trailerAdapterViewHolder.mMovieTitleTextView.setText(mTrailersList.get(position).getTrailerName());
+        trailerAdapterViewHolder.mTrailerNameTextView.setText(mTrailersList.get(position).getTrailerName());
     }
 
     /**

@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
     app:behavior_overlapTop="20dp"
+    android:id="@+id/nestedScrollViewDetails"
     app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
     <LinearLayout
@@ -129,6 +130,34 @@
             </LinearLayout>
 
         </android.support.v7.widget.CardView>
+
+        <TextView
+            android:layout_margin="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trailers"
+            android:textSize="@dimen/header_size_text"
+            android:textColor="@color/colorSecondaryText"/>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/trailersRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+        <TextView
+            android:layout_margin="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/reviews"
+            android:textSize="@dimen/header_size_text"
+            android:textColor="@color/colorSecondaryText"/>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/reviewsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"/>
 
     </LinearLayout>
 

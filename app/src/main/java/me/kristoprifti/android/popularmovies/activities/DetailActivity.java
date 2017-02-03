@@ -12,7 +12,11 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,20 +26,38 @@ import android.widget.TextView;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONException;
+
+import java.net.URL;
+import java.util.ArrayList;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
+import me.kristoprifti.android.popularmovies.adapters.ReviewAdapter;
+import me.kristoprifti.android.popularmovies.adapters.TrailerAdapter;
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
 import me.kristoprifti.android.popularmovies.handlers.FavoriteMovieQueryHandler;
 import me.kristoprifti.android.popularmovies.models.Movie;
+import me.kristoprifti.android.popularmovies.models.Review;
+import me.kristoprifti.android.popularmovies.models.Trailer;
+import me.kristoprifti.android.popularmovies.utilities.MovieDBJsonUtils;
+import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements
+        NetworkUtils.OnDownloadComplete,
+        TrailerAdapter.TrailerAdapterOnClickHandler,
+        ReviewAdapter.ReviewAdapterOnClickHandler{
 
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovieApp";
+    private static final String TAG = "DetailActivity";
     private static FavoriteMovieQueryHandler sQueryHandler;
     private static final int TOKEN_CHECK_IF_FAVORITE = 111;
     private static final int TOKEN_ADD_TO_FAVORITES = 222;
     private static final int TOKEN_REMOVE_FROM_FAVORITES = 333;
+
+    private TrailerAdapter mTrailerAdapter;
+    private ReviewAdapter mReviewAdapter;
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
@@ -61,6 +83,13 @@ public class DetailActivity extends AppCompatActivity {
     CollapsingToolbarLayout collapsingToolbarLayout;
     @BindView(R.id.favoriteButton)
     FloatingActionButton addToFavorites;
+    @BindView(R.id.trailersRecyclerView)
+    RecyclerView trailersRecyclerView;
+    @BindView(R.id.reviewsRecyclerView)
+    RecyclerView reviewsRecyclerView;
+
+    private ArrayList<Trailer> mTrailersList;
+    private ArrayList<Review> mReviewsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +105,25 @@ public class DetailActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent != null) {
+            GridLayoutManager gridLayoutManagerTrailers = new GridLayoutManager(this, 2, LinearLayoutManager.VERTICAL, false);
+            LinearLayoutManager gridLayoutManagerReviews = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+
+            mTrailersList = new ArrayList<>();
+            mTrailerAdapter = new TrailerAdapter(DetailActivity.this);
+            //apply this layout manager to the recyclerview
+            trailersRecyclerView.setLayoutManager(gridLayoutManagerTrailers);
+            trailersRecyclerView.setHasFixedSize(true);
+            /* attaching the adapter to the recyclerview */
+            trailersRecyclerView.setAdapter(mTrailerAdapter);
+
+            mReviewsList = new ArrayList<>();
+            mReviewAdapter = new ReviewAdapter(DetailActivity.this);
+            //apply this layout manager to the recyclerview
+            reviewsRecyclerView.setLayoutManager(gridLayoutManagerReviews);
+            reviewsRecyclerView.setHasFixedSize(true);
+            //* attaching the adapter to the recyclerview *//*
+            reviewsRecyclerView.setAdapter(mReviewAdapter);
+
             if (intent.hasExtra(getString(R.string.intent_color_integer)) && intent.getIntExtra(getString(R.string.intent_color_integer), 0) != 0) {
                 colorPalette = intent.getIntExtra(getString(R.string.intent_color_integer), 0);
             } else {
@@ -93,8 +141,31 @@ public class DetailActivity extends AppCompatActivity {
                 }
 
                 displayMovieData(movie);
+
+                if(savedInstanceState != null &&
+                        savedInstanceState.containsKey(getString(R.string.reviews_key)) &&
+                        savedInstanceState.containsKey(getString(R.string.trailers_key))) {
+                    Log.d(TAG, "onCreate: onsavedinstancestate exists");
+                    mTrailersList = savedInstanceState.getParcelableArrayList(getString(R.string.trailers_key));
+                    mTrailerAdapter.setTrailersList(mTrailersList);
+                    mReviewsList = savedInstanceState.getParcelableArrayList(getString(R.string.reviews_key));
+                    mReviewAdapter.setReviewsList(mReviewsList);
+                } else {
+                    Log.d(TAG, "onCreate: onsavedinstancestate doesnt exist");
+                    loadTrailersFromServer(movie.getMovieId());
+                    loadReviewsFromServer(movie.getMovieId());
+                }
             }
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        Log.d(TAG, "onSaveInstanceState: starts");
+        outState.putParcelableArrayList(getString(R.string.reviews_key), mReviewsList);
+        outState.putParcelableArrayList(getString(R.string.trailers_key), mTrailersList);
+        super.onSaveInstanceState(outState);
+        Log.d(TAG, "onSaveInstanceState: ends");
     }
 
     private void initializeQueryHandler(final Movie localMovie) {
@@ -191,7 +262,8 @@ public class DetailActivity extends AppCompatActivity {
 
             @Override
             public void onError() {
-
+                ActivityCompat.startPostponedEnterTransition(DetailActivity.this);
+                mMoviePosterImageView.setImageResource(R.mipmap.ic_launcher);
             }
         });
     }
@@ -214,6 +286,28 @@ public class DetailActivity extends AppCompatActivity {
             hsv[2] *= 0.7f;
             int colorPrimaryDark = Color.HSVToColor(hsv);
             getWindow().setStatusBarColor(colorPrimaryDark);
+        }
+    }
+
+    private void loadTrailersFromServer(int movieId){
+        if(NetworkUtils.checkInternetConnection(this)){
+            URL trailerRequestUrl = NetworkUtils.buildTrailerUrl(String.valueOf(movieId));
+            try {
+                NetworkUtils.getResponseFromHttpUrl(trailerRequestUrl, this, NetworkUtils.GET_TRAILER);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void loadReviewsFromServer(int movieId){
+        if(NetworkUtils.checkInternetConnection(this)){
+            URL reviewRequestUrl = NetworkUtils.buildReviewUrl(String.valueOf(movieId));
+            try {
+                NetworkUtils.getResponseFromHttpUrl(reviewRequestUrl, this, NetworkUtils.GET_REVIEW);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -246,5 +340,48 @@ public class DetailActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onDownloadComplete(String responseString, int requestCode) {
+        Log.d(TAG, "onDownloadComplete: starts");
+        try {
+            if(requestCode == NetworkUtils.GET_TRAILER){
+                ArrayList<Trailer> mTrailersLocal = MovieDBJsonUtils.getSimpleTrailerStringsFromJson(responseString);
+                if (mTrailersLocal != null) {
+                    mTrailersList.addAll(mTrailersLocal);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mTrailerAdapter.setTrailersList(mTrailersList);
+                        }
+                    });
+                }
+            } else if(requestCode == NetworkUtils.GET_REVIEW){
+                ArrayList<Review> mReviewsLocal = MovieDBJsonUtils.getSimpleReviewStringsFromJson(responseString);
+                if (mReviewsLocal != null) {
+                    mReviewsList.addAll(mReviewsLocal);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mReviewAdapter.setReviewsList(mReviewsList);
+                        }
+                    });
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "onDownloadComplete: ends");
+    }
+
+    @Override
+    public void onClick(Trailer selectedTrailer) {
+
+    }
+
+    @Override
+    public void onClick(Review selectedReview) {
+
     }
 }

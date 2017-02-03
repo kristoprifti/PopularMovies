@@ -5,8 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityOptionsCompat;
@@ -392,17 +390,6 @@ public class MainActivity extends AppCompatActivity implements
         pageNumber = 1;
     }
 
-    /*Check if app is connected to the internet*/
-    public boolean checkInternetConnection() {
-        //get connectivity manager in order to check the network status
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        //if there is internet then we initialize the loader
-        //in case of no internet connection we notify the user through a snackBar
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
-
     private void showSnackBar(String message, boolean action){
         snackbar = Snackbar.make(mainView, message, Snackbar.LENGTH_INDEFINITE);
         if(action){
@@ -435,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private void loadMoviesFromServer(){
         Log.d(TAG, "loadMoviesFromServer: starts");
-        if(checkInternetConnection()){
+        if(NetworkUtils.checkInternetConnection(this)){
             if(pageNumber > 1){
                 mLoadingMoreIndicator.setVisibility(View.VISIBLE);
             } else {
@@ -443,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements
             }
             URL movieRequestUrl = NetworkUtils.buildUrl(PopularMoviesPreferences.getPreferredSortType(MainActivity.this), pageNumber);
             try {
-                NetworkUtils.getResponseFromHttpUrl(movieRequestUrl, this);
+                NetworkUtils.getResponseFromHttpUrl(movieRequestUrl, this, NetworkUtils.GET_MOVIE);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -454,25 +441,27 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onDownloadComplete(String responseString) {
+    public void onDownloadComplete(String responseString, int responseCode) {
         Log.d(TAG, "onDownloadComplete: starts");
         try {
-            ArrayList<Movie> mMoviesLocal = MovieDBJsonUtils.getSimpleMovieStringsFromJson(responseString);
-            if (mMoviesLocal != null) {
-                mMoviesList.addAll(mMoviesLocal);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mMovieAdapter.setMoviesList(mMoviesList);
-                        loading = true;
-                        if(pageNumber > 1){
-                            mLoadingMoreIndicator.setVisibility(View.INVISIBLE);
-                        } else {
-                            mLoadingIndicator.setVisibility(View.INVISIBLE);
+            if(responseCode == NetworkUtils.GET_MOVIE){
+                ArrayList<Movie> mMoviesLocal = MovieDBJsonUtils.getSimpleMovieStringsFromJson(responseString);
+                if (mMoviesLocal != null) {
+                    mMoviesList.addAll(mMoviesLocal);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mMovieAdapter.setMoviesList(mMoviesList);
+                            loading = true;
+                            if(pageNumber > 1){
+                                mLoadingMoreIndicator.setVisibility(View.INVISIBLE);
+                            } else {
+                                mLoadingIndicator.setVisibility(View.INVISIBLE);
+                            }
+                            showMovieDataView();
                         }
-                        showMovieDataView();
-                    }
-                });
+                    });
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();

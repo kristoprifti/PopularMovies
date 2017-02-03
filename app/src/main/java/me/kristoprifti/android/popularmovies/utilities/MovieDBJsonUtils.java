@@ -85,7 +85,7 @@ public class MovieDBJsonUtils {
         return parsedMovieData;
     }
 
-    static ArrayList<Trailer> getSimpleTrailerStringsFromJson(String trailerJsonStr)
+    public static ArrayList<Trailer> getSimpleTrailerStringsFromJson(String trailerJsonStr)
             throws JSONException {
 
         /* trailer information. Each trailer info is an element of the "results" array */
@@ -129,7 +129,7 @@ public class MovieDBJsonUtils {
         return parsedTrailerData;
     }
 
-    static ArrayList<Review> getSimpleReviewStringsFromJson(String reviewJsonStr)
+    public static ArrayList<Review> getSimpleReviewStringsFromJson(String reviewJsonStr)
             throws JSONException {
 
         /* Review information. Each Review info is an element of the "results" array */

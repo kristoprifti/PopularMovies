@@ -3,6 +3,8 @@ package me.kristoprifti.android.popularmovies.utilities;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.DisplayMetrics;
 
@@ -37,6 +39,10 @@ public class NetworkUtils {
 
     private static final String STATIC_TRAILER_PATH = "videos";
     private static final String STATIC_REVIEW_PATH = "reviews";
+
+    public static final int GET_MOVIE = 1;
+    public static final int GET_TRAILER = 2;
+    public static final int GET_REVIEW = 3;
 
     private static final String MOVIE_BASE_URL = STATIC_MOVIE_URL;
 
@@ -77,7 +83,7 @@ public class NetworkUtils {
     private static OnDownloadComplete mOnDownloadComplete;
 
     public interface OnDownloadComplete {
-        void onDownloadComplete(String responseString);
+        void onDownloadComplete(String responseString, int requestCode);
     }
 
     /**
@@ -175,11 +181,11 @@ public class NetworkUtils {
      * @param url The URL to fetch the HTTP response from.
      * @throws IOException Related to network and stream reading
      */
-    public static void getResponseFromHttpUrl(URL url, OnDownloadComplete onDownloadComplete) throws IOException {
+    public static void getResponseFromHttpUrl(URL url, OnDownloadComplete onDownloadComplete, final int requestCode) throws IOException {
         mOnDownloadComplete = onDownloadComplete;
         //implemented the OKHttp library to communicate with the Movie DB servers
         OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
+        final Request request = new Request.Builder()
                 .url(url)
                 .build();
 
@@ -191,7 +197,13 @@ public class NetworkUtils {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                mOnDownloadComplete.onDownloadComplete(response.body().string());
+                if(requestCode == GET_MOVIE) {
+                    mOnDownloadComplete.onDownloadComplete(response.body().string(), GET_MOVIE);
+                } else if(requestCode == GET_REVIEW){
+                    mOnDownloadComplete.onDownloadComplete(response.body().string(), GET_REVIEW);
+                } else {
+                    mOnDownloadComplete.onDownloadComplete(response.body().string(), GET_TRAILER);
+                }
             }
         });
     }
@@ -215,29 +227,14 @@ public class NetworkUtils {
         return favoriteMoviesList;
     }
 
-    /*public static ArrayList<Trailer> requestTrailerFromServer(String movieId){
-        URL trailerRequestUrl = NetworkUtils.buildTrailerUrl(movieId);
-        try {
-            String jsonTrailerResponse = NetworkUtils
-                    .getResponseFromHttpUrl(trailerRequestUrl);
-            return MovieDBJsonUtils
-                    .getSimpleTrailerStringsFromJson(jsonTrailerResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    /*Check if app is connected to the internet*/
+    public static boolean checkInternetConnection(Context context) {
+        //get connectivity manager in order to check the network status
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        //if there is internet then we initialize the loader
+        //in case of no internet connection we notify the user through a snackBar
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
-
-    public static ArrayList<Review> requestReviewFromServer(String movieId){
-        URL reviewRequestUrl = NetworkUtils.buildReviewUrl(movieId);
-        try {
-            String jsonReviewResponse = NetworkUtils
-                    .getResponseFromHttpUrl(reviewRequestUrl);
-            return MovieDBJsonUtils
-                    .getSimpleReviewStringsFromJson(jsonReviewResponse);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }*/
 }

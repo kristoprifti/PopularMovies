@@ -51,8 +51,8 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
      * Cache of the children views for a forecast list item.
      */
     class ReviewAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        @BindView(R.id.tv_movie_full_title)
-        TextView mMovieTitleTextView;
+        @BindView(R.id.reviewNameTextView)
+        TextView mReviewTitleTextView;
 
         ReviewAdapterViewHolder(View view) {
             super(view);
@@ -85,7 +85,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
     @Override
     public ReviewAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         mContext = viewGroup.getContext();
-        int layoutIdForListItem = android.R.layout.simple_list_item_1;
+        int layoutIdForListItem = R.layout.review_item_row;
         LayoutInflater inflater = LayoutInflater.from(mContext);
 
         View view = inflater.inflate(layoutIdForListItem, viewGroup, false);
@@ -103,7 +103,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(final ReviewAdapterViewHolder reviewAdapterViewHolder, @SuppressLint("RecyclerView") final int position) {
-        reviewAdapterViewHolder.mMovieTitleTextView.setText(mReviewsList.get(position).getReviewId());
+        reviewAdapterViewHolder.mReviewTitleTextView.setText(mReviewsList.get(position).getReviewAuthor() + "\n\n" + mReviewsList.get(position).getReviewContent());
     }
 
     /**
