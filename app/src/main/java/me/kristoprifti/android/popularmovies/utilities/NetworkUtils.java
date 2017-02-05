@@ -185,7 +185,7 @@ public class NetworkUtils {
         mOnDownloadComplete = onDownloadComplete;
         //implemented the OKHttp library to communicate with the Movie DB servers
         OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder()
+        Request request = new Request.Builder()
                 .url(url)
                 .build();
 

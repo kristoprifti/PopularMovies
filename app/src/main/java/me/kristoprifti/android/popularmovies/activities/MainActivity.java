@@ -155,9 +155,10 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
                 if (scrollY == (v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight())) {
+                    Log.d("kot", "scroll listener " + pageNumber);
                     if(loading){
                         loading = false;
-                        ++pageNumber;
+                        pageNumber++;
                         loadMoviesFromServer();
                     }
                 }
@@ -249,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public void onLoaderReset(Loader<ArrayList<Movie>> loader) {
+        Log.d(TAG, "onLoaderReset: starts");
     }
 
     /**
@@ -338,7 +340,6 @@ public class MainActivity extends AppCompatActivity implements
             if(!PopularMoviesPreferences
                     .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
                 Log.d(TAG, "onStart: loader destroyed");
-                //getSupportLoaderManager().destroyLoader(MOVIE_LOADER_ID);
                 loadMoviesFromServer();
             } else {
                 Log.d(TAG, "onStart: loader started");
@@ -359,16 +360,19 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d(TAG, "onCreateOptionsMenu: starts");
         /* Use AppCompatActivity's method getMenuInflater to get a handle on the menu inflater */
         MenuInflater inflater = getMenuInflater();
         /* Use the inflater's inflate method to inflate our menu layout to this menu */
         inflater.inflate(R.menu.main, menu);
         /* Return true so that the menu is displayed in the Toolbar */
+        Log.d(TAG, "onCreateOptionsMenu: ends");
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "onOptionsItemSelected: starts");
         int id = item.getItemId();
 
         if (id == R.id.action_settings) {
@@ -377,6 +381,7 @@ public class MainActivity extends AppCompatActivity implements
             return true;
         }
 
+        Log.d(TAG, "onOptionsItemSelected: ends");
         return super.onOptionsItemSelected(item);
     }
 
@@ -391,6 +396,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showSnackBar(String message, boolean action){
+        Log.d(TAG, "showSnackBar: starts");
         snackbar = Snackbar.make(mainView, message, Snackbar.LENGTH_INDEFINITE);
         if(action){
             snackbar.setAction(R.string.action_retry, new View.OnClickListener() {
@@ -418,6 +424,7 @@ public class MainActivity extends AppCompatActivity implements
         textView.setTextColor(Color.WHITE);
 
         snackbar.show();
+        Log.d(TAG, "showSnackBar: ends");
     }
 
     private void loadMoviesFromServer(){
@@ -452,7 +459,6 @@ public class MainActivity extends AppCompatActivity implements
                         @Override
                         public void run() {
                             mMovieAdapter.setMoviesList(mMoviesList);
-                            loading = true;
                             if(pageNumber > 1){
                                 mLoadingMoreIndicator.setVisibility(View.INVISIBLE);
                             } else {
@@ -461,6 +467,7 @@ public class MainActivity extends AppCompatActivity implements
                             showMovieDataView();
                         }
                     });
+                    loading = true;
                 }
             }
         } catch (JSONException e) {
