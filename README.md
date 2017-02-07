@@ -10,10 +10,10 @@ Project 1 and 2 of Google Associate Android Developer Nanodegree by Udacity
 - Fetched trailers from the database of TheMovieDB
 - Fetched reviews from the database of TheMovieDB
 - Implemented pagination to load more movies from the server each time the user reaches the bottom of recyclerview
+- Implemented Database interaction for trailers and reviews
 
 **To-DO:**
 - implement Master/Detail flow in the UI for tablets 
-- implement Database interaction for trailers and reviews
 
 **Libraries Used:**
 - android support libraries of android v25: Appcompat, Recyclerview, Preference, Cardview, Palette, Design
