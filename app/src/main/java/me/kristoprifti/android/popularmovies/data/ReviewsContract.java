@@ -11,7 +11,7 @@ import android.provider.BaseColumns;
 
 public class ReviewsContract {
 
-    static final String CONTENT_AUTHORITY = "me.kristoprifti.android.popularmovies";
+    private static final String CONTENT_AUTHORITY = "me.kristoprifti.android.popularmovies";
 
     private static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
 

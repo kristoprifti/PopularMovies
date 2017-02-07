@@ -44,6 +44,7 @@ class MoviesDbHelper extends SQLiteOpenHelper {
                 ReviewsEntry.COLUMN_REVIEW_ID + " TEXT NOT NULL, " +
                 ReviewsEntry.COLUMN_REVIEW_AUTHOR + " TEXT NOT NULL, " +
                 ReviewsEntry.COLUMN_REVIEW_CONTENT + " TEXT NOT NULL, " +
+                ReviewsEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
                 "FOREIGN KEY(" + ReviewsEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MoviesEntry.TABLE_NAME + "(" + MoviesEntry.COLUMN_MOVIE_ID + "));";
 
@@ -51,7 +52,8 @@ class MoviesDbHelper extends SQLiteOpenHelper {
                 TrailersEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 TrailersEntry.COLUMN_TRAILER_ID + " TEXT NOT NULL, " +
                 TrailersEntry.COLUMN_TRAILER_NAME + " TEXT NOT NULL, " +
-                TrailersEntry.COLUMN_TRAILER_KEY + " TEXT NOT NULL" +
+                TrailersEntry.COLUMN_TRAILER_KEY + " TEXT NOT NULL, " +
+                TrailersEntry.COLUMN_MOVIE_ID + " INTEGER NOT NULL, " +
                 "FOREIGN KEY(" + TrailersEntry.COLUMN_MOVIE_ID + ") REFERENCES " +
                 MoviesEntry.TABLE_NAME + "(" + MoviesEntry.COLUMN_MOVIE_ID + "));";
         /*

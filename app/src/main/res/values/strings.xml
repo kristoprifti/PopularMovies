@@ -59,6 +59,7 @@
     <string name="movies_key" translatable="false">movies</string>
     <string name="trailers_key" translatable="false">trailers</string>
     <string name="reviews_key" translatable="false">reviews</string>
+    <string name="fab_favorite" translatable="false">is_favorite</string>
     <string name="scroll_position_key" translatable="false">scroll_position</string>
     <string name="scroll_position" translatable="false">scroll_position</string>
     <string name="poster_transition" translatable="false">posterTransition</string>

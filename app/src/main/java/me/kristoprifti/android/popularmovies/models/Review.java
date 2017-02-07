@@ -24,9 +24,9 @@ public class Review implements Parcelable {
     }
 
     public Review(Cursor cursor) {
-        this.reviewId = cursor.getString(NetworkUtils.INDEX_COLUMN_TITLE);
-        this.reviewAuthor = cursor.getString(NetworkUtils.INDEX_COLUMN_POSTER);
-        this.reviewContent = cursor.getString(NetworkUtils.INDEX_COLUMN_BACKDROP);
+        this.reviewId = cursor.getString(NetworkUtils.INDEX_COLUMN_REVIEW_ID);
+        this.reviewAuthor = cursor.getString(NetworkUtils.INDEX_COLUMN_REVIEW_AUTHOR);
+        this.reviewContent = cursor.getString(NetworkUtils.INDEX_COLUMN_REVIEW_CONTENT);
     }
 
     private Review(Parcel in){

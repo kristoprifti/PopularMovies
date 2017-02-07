@@ -24,9 +24,9 @@ public class Trailer implements Parcelable{
     }
 
     public Trailer(Cursor cursor) {
-        this.trailerId = cursor.getString(NetworkUtils.INDEX_COLUMN_TITLE);
-        this.trailerName = cursor.getString(NetworkUtils.INDEX_COLUMN_POSTER);
-        this.trailerKey = cursor.getString(NetworkUtils.INDEX_COLUMN_BACKDROP);
+        this.trailerId = cursor.getString(NetworkUtils.INDEX_COLUMN_TRAILER_ID);
+        this.trailerName = cursor.getString(NetworkUtils.INDEX_COLUMN_TRAILER_NAME);
+        this.trailerKey = cursor.getString(NetworkUtils.INDEX_COLUMN_TRAILER_KEY);
     }
 
     private Trailer(Parcel in){

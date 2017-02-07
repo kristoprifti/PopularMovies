@@ -37,6 +37,8 @@ import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.adapters.ReviewAdapter;
 import me.kristoprifti.android.popularmovies.adapters.TrailerAdapter;
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
+import me.kristoprifti.android.popularmovies.data.ReviewsContract;
+import me.kristoprifti.android.popularmovies.data.TrailersContract;
 import me.kristoprifti.android.popularmovies.handlers.FavoriteMovieQueryHandler;
 import me.kristoprifti.android.popularmovies.models.Movie;
 import me.kristoprifti.android.popularmovies.models.Review;
@@ -51,10 +53,21 @@ public class DetailActivity extends AppCompatActivity implements
 
     private static final String MOVIE_SHARE_HASHTAG = " #PopularMovieApp";
     private static final String TAG = "DetailActivity";
-    private static FavoriteMovieQueryHandler sQueryHandler;
+
+    private static FavoriteMovieQueryHandler sMovieQueryHandler;
+
     private static final int TOKEN_CHECK_IF_FAVORITE = 111;
-    private static final int TOKEN_ADD_TO_FAVORITES = 222;
-    private static final int TOKEN_REMOVE_FROM_FAVORITES = 333;
+    private static final int TRAILER_LOADER_ID = 222;
+    private static final int REVIEW_LOADER_ID = 333;
+
+    private static final int TOKEN_ADD_MOVIE_TO_FAVORITES = 200;
+    private static final int TOKEN_REMOVE_MOVIE_FROM_FAVORITES = 300;
+
+    private static final int TOKEN_ADD_TRAILER_TO_FAVORITES = 201;
+    private static final int TOKEN_REMOVE_TRAILER_FROM_FAVORITES = 301;
+
+    private static final int TOKEN_ADD_REVIEW_TO_FAVORITES = 202;
+    private static final int TOKEN_REMOVE_REVIEW_FROM_FAVORITES = 302;
 
     private TrailerAdapter mTrailerAdapter;
     private ReviewAdapter mReviewAdapter;
@@ -90,6 +103,8 @@ public class DetailActivity extends AppCompatActivity implements
 
     private ArrayList<Trailer> mTrailersList;
     private ArrayList<Review> mReviewsList;
+
+    private boolean isFavorite = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,9 +147,7 @@ public class DetailActivity extends AppCompatActivity implements
             colorizeActivity(colorPalette);
 
             if (intent.hasExtra(getString(R.string.intent_movie_object))) {
-                Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
-
-                initializeQueryHandler(movie);
+                final Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
 
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(movie.getOriginalTitle());
@@ -150,10 +163,26 @@ public class DetailActivity extends AppCompatActivity implements
                     mTrailerAdapter.setTrailersList(mTrailersList);
                     mReviewsList = savedInstanceState.getParcelableArrayList(getString(R.string.reviews_key));
                     mReviewAdapter.setReviewsList(mReviewsList);
+                    if(savedInstanceState.getBoolean(getString(R.string.fab_favorite))){
+                        addToFavorites.setImageResource(R.drawable.ic_favorite);
+                        isFavorite = true;
+                    } else {
+                        addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                        isFavorite = false;
+                    }
+                    addToFavorites.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (isFavorite) {
+                                removeMovieFromFavorites(movie);
+                            } else {
+                                addMovieToFavorites(movie, mTrailersList, mReviewsList);
+                            }
+                        }
+                    });
                 } else {
                     Log.d(TAG, "onCreate: onsavedinstancestate doesnt exist");
-                    loadTrailersFromServer(movie.getMovieId());
-                    loadReviewsFromServer(movie.getMovieId());
+                    initializeQueryHandlers(movie);
                 }
             }
         }
@@ -164,50 +193,124 @@ public class DetailActivity extends AppCompatActivity implements
         Log.d(TAG, "onSaveInstanceState: starts");
         outState.putParcelableArrayList(getString(R.string.reviews_key), mReviewsList);
         outState.putParcelableArrayList(getString(R.string.trailers_key), mTrailersList);
+        outState.putBoolean(getString(R.string.fab_favorite), isFavorite);
         super.onSaveInstanceState(outState);
         Log.d(TAG, "onSaveInstanceState: ends");
     }
 
-    private void initializeQueryHandler(final Movie localMovie) {
-        sQueryHandler = new FavoriteMovieQueryHandler(this, new FavoriteMovieQueryHandler.AsyncQueryListener() {
+    private void initializeQueryHandlers(final Movie localMovie) {
+        sMovieQueryHandler = new FavoriteMovieQueryHandler(this, new FavoriteMovieQueryHandler.AsyncQueryListener() {
             @Override
             public void onQueryComplete(int token, Object cookie, final Cursor cursor) {
                 // handle query complete with given cursor
-                if (token == TOKEN_CHECK_IF_FAVORITE) {
-                    if (cursor != null && cursor.getCount() > 0) {
-                        addToFavorites.setImageResource(R.drawable.ic_favorite);
-                    } else {
-                        addToFavorites.setImageResource(R.drawable.ic_not_favorite);
-                    }
-                    addToFavorites.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            if (cursor != null && cursor.getCount() > 0) {
-                                removeMovieFromFavorites(localMovie);
-                            } else {
-                                addMovieToFavorites(localMovie);
-                            }
+                switch (token){
+                    case TOKEN_CHECK_IF_FAVORITE:
+                        if (cursor != null && cursor.getCount() > 0) {
+                            addToFavorites.setImageResource(R.drawable.ic_favorite);
+                            isFavorite = true;
+                            Log.d(TAG, "onQueryComplete: start trailer query handler");
+                            sMovieQueryHandler.startQuery(
+                                    TRAILER_LOADER_ID,
+                                    null,
+                                    TrailersContract.TrailersEntry.CONTENT_URI,
+                                    null,   // projection
+                                    TrailersContract.TrailersEntry.COLUMN_MOVIE_ID + " = ?", // selection
+                                    new String[]{Integer.toString(localMovie.getMovieId())},   // selectionArgs
+                                    null    // sort order
+                            );
+                            Log.d(TAG, "onQueryComplete: start review query handler");
+                            sMovieQueryHandler.startQuery(
+                                    REVIEW_LOADER_ID,
+                                    null,
+                                    ReviewsContract.ReviewsEntry.CONTENT_URI,
+                                    null,   // projection
+                                    ReviewsContract.ReviewsEntry.COLUMN_MOVIE_ID + " = ?", // selection
+                                    new String[]{Integer.toString(localMovie.getMovieId())},   // selectionArgs
+                                    null    // sort order
+                            );
+                        } else {
+                            addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                            loadTrailersFromServer(localMovie.getMovieId());
+                            loadReviewsFromServer(localMovie.getMovieId());
+                            isFavorite = false;
                         }
-                    });
+                        addToFavorites.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (isFavorite) {
+                                    removeMovieFromFavorites(localMovie);
+                                } else {
+                                    addMovieToFavorites(localMovie, mTrailersList, mReviewsList);
+                                }
+                            }
+                        });
+                        break;
+                    case TRAILER_LOADER_ID:
+                        if (cursor != null && cursor.moveToFirst()) {
+                            Log.d(TAG, "onQueryComplete: there are trailers");
+                            do {
+                                Trailer trailer = new Trailer(cursor);
+                                mTrailersList.add(trailer);
+                            } while (cursor.moveToNext());
+                            cursor.close();
+                            mTrailerAdapter.setTrailersList(mTrailersList);
+                        }
+                        break;
+                    case REVIEW_LOADER_ID:
+                        if (cursor != null && cursor.moveToFirst()) {
+                            Log.d(TAG, "onQueryComplete: there are reviews");
+                            do {
+                                Review review = new Review(cursor);
+                                mReviewsList.add(review);
+                            } while (cursor.moveToNext());
+                            cursor.close();
+                            mReviewAdapter.setReviewsList(mReviewsList);
+                        }
+                        break;
+                    default:
                 }
             }
 
             @Override
             public void onInsertComplete(int token, Object cookie, Uri uri) {
-                if(token == TOKEN_ADD_TO_FAVORITES){
-                    addToFavorites.setImageResource(R.drawable.ic_favorite);
+                switch (token){
+                    case TOKEN_ADD_MOVIE_TO_FAVORITES:
+                        addToFavorites.setImageResource(R.drawable.ic_favorite);
+                        isFavorite = true;
+                        break;
+                    case TOKEN_ADD_TRAILER_TO_FAVORITES:
+                        Log.d(TAG, "onInsertComplete: Trailers added in Favorites");
+                        break;
+                    case TOKEN_ADD_REVIEW_TO_FAVORITES:
+                        Log.d(TAG, "onInsertComplete: Reviews added from favorites");
+                        break;
+                    default:
                 }
             }
 
             @Override
             public void onDeleteComplete(int token, Object cookie, int result) {
-                if(token == TOKEN_REMOVE_FROM_FAVORITES){
-                    addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                switch (token){
+                    case TOKEN_REMOVE_MOVIE_FROM_FAVORITES:
+                        addToFavorites.setImageResource(R.drawable.ic_not_favorite);
+                        isFavorite = false;
+                        break;
+                    case TOKEN_REMOVE_TRAILER_FROM_FAVORITES:
+                        Log.d(TAG, "onInsertComplete: Trailers removed from favorites");
+                        break;
+                    case TOKEN_REMOVE_REVIEW_FROM_FAVORITES:
+                        Log.d(TAG, "onInsertComplete: Reviews removed from favorites");
+                        break;
+                    default:
                 }
             }
         });
+        
+        checkForFavorites(localMovie);
+    }
 
-        sQueryHandler.startQuery(
+    private void checkForFavorites(Movie localMovie){
+        sMovieQueryHandler.startQuery(
                 TOKEN_CHECK_IF_FAVORITE,
                 null,
                 MoviesContract.MoviesEntry.CONTENT_URI,
@@ -219,30 +322,68 @@ public class DetailActivity extends AppCompatActivity implements
     }
 
     private void removeMovieFromFavorites(final Movie movie) {
-        sQueryHandler.startDelete(TOKEN_REMOVE_FROM_FAVORITES,
+        sMovieQueryHandler.startDelete(TOKEN_REMOVE_MOVIE_FROM_FAVORITES,
                 null,
                 MoviesContract.MoviesEntry.CONTENT_URI,
                 MoviesContract.MoviesEntry.COLUMN_MOVIE_ID + " = ?",
                 new String[]{Integer.toString(movie.getMovieId())});
+
+        sMovieQueryHandler.startDelete(TOKEN_REMOVE_TRAILER_FROM_FAVORITES,
+                null,
+                TrailersContract.TrailersEntry.CONTENT_URI,
+                TrailersContract.TrailersEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{Integer.toString(movie.getMovieId())});
+
+        sMovieQueryHandler.startDelete(TOKEN_REMOVE_REVIEW_FROM_FAVORITES,
+                null,
+                ReviewsContract.ReviewsEntry.CONTENT_URI,
+                ReviewsContract.ReviewsEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{Integer.toString(movie.getMovieId())});
     }
 
-    private void addMovieToFavorites(final Movie movie) {
-        ContentValues values = new ContentValues();
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_ID, movie.getMovieId());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE, movie.getOriginalTitle());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING, movie.getRating());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP, movie.getBackdropPath());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER, movie.getPosterPath());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY, movie.getPopularity());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES, movie.getVoteCount());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getReleaseDate());
-        values.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE, movie.getOriginalLanguage());
+    private void addMovieToFavorites(final Movie movie, final ArrayList<Trailer> trailersList, final ArrayList<Review> reviewsList) {
+        ContentValues movieValues = new ContentValues();
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_TITLE, movie.getOriginalTitle());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RATING, movie.getRating());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_BACKDROP, movie.getBackdropPath());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POSTER, movie.getPosterPath());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_POPULARITY, movie.getPopularity());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_VOTES, movie.getVoteCount());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_RELEASE_DATE, movie.getReleaseDate());
+        movieValues.put(MoviesContract.MoviesEntry.COLUMN_MOVIE_LANGUAGE, movie.getOriginalLanguage());
 
-        sQueryHandler.startInsert(TOKEN_ADD_TO_FAVORITES,
+        sMovieQueryHandler.startInsert(TOKEN_ADD_MOVIE_TO_FAVORITES,
                 null,
                 MoviesContract.MoviesEntry.CONTENT_URI,
-                values);
+                movieValues);
+
+        for (int i = 0; i < trailersList.size(); i++) {
+            ContentValues trailerValues = new ContentValues();
+            trailerValues.put(TrailersContract.TrailersEntry.COLUMN_TRAILER_ID, trailersList.get(i).getTrailerId());
+            trailerValues.put(TrailersContract.TrailersEntry.COLUMN_TRAILER_NAME, trailersList.get(i).getTrailerName());
+            trailerValues.put(TrailersContract.TrailersEntry.COLUMN_TRAILER_KEY, trailersList.get(i).getTrailerKey());
+            trailerValues.put(TrailersContract.TrailersEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+
+            sMovieQueryHandler.startInsert(TOKEN_ADD_TRAILER_TO_FAVORITES,
+                    null,
+                    TrailersContract.TrailersEntry.CONTENT_URI,
+                    trailerValues);
+        }
+
+        for (int i = 0; i < reviewsList.size(); i++) {
+            ContentValues reviewValues = new ContentValues();
+            reviewValues.put(ReviewsContract.ReviewsEntry.COLUMN_REVIEW_ID, reviewsList.get(i).getReviewId());
+            reviewValues.put(ReviewsContract.ReviewsEntry.COLUMN_REVIEW_AUTHOR, reviewsList.get(i).getReviewAuthor());
+            reviewValues.put(ReviewsContract.ReviewsEntry.COLUMN_REVIEW_CONTENT, reviewsList.get(i).getReviewContent());
+            reviewValues.put(ReviewsContract.ReviewsEntry.COLUMN_MOVIE_ID, movie.getMovieId());
+
+            sMovieQueryHandler.startInsert(TOKEN_ADD_REVIEW_TO_FAVORITES,
+                    null,
+                    ReviewsContract.ReviewsEntry.CONTENT_URI,
+                    reviewValues);
+        }
     }
 
     private void displayMovieData(Movie movie) {
@@ -369,6 +510,7 @@ public class DetailActivity extends AppCompatActivity implements
                     });
                 }
             }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }

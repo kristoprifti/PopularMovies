@@ -118,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements
             Log.d(TAG, "onCreate: there is savedinstancestate");
             mMoviesList = savedInstanceState.getParcelableArrayList(getString(R.string.movies_key));
             mMovieAdapter.setMoviesList(mMoviesList);
-            addScrollListenerToNestedScrollView();
 
             final int[] position = savedInstanceState.getIntArray(getString(R.string.scroll_position_key));
             if(position != null)
@@ -131,12 +130,16 @@ public class MainActivity extends AppCompatActivity implements
                 .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
             if (mMoviesList.size() == 0) {
                 Log.d(TAG, "onCreate: load from server");
-                addScrollListenerToNestedScrollView();
                 loadMoviesFromServer();
             }
         } else {
             Log.d(TAG, "onCreate: load from loader");
             getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
+        }
+
+        if(!PopularMoviesPreferences.getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites)))
+        {
+            addScrollListenerToNestedScrollView();
         }
 
         Log.d(TAG, "onCreate: registering on preference changed listener");
@@ -262,6 +265,16 @@ public class MainActivity extends AppCompatActivity implements
         mMoviesList = new ArrayList<>();
         mMovieAdapter.setMoviesList(null);
         Log.d(TAG, "invalidateData: ends");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(PopularMoviesPreferences
+                .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))){
+            invalidateData();
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, null, this);
+        }
     }
 
     /**

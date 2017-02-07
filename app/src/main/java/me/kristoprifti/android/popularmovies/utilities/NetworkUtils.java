@@ -14,6 +14,8 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import me.kristoprifti.android.popularmovies.data.MoviesContract;
+import me.kristoprifti.android.popularmovies.data.ReviewsContract;
+import me.kristoprifti.android.popularmovies.data.TrailersContract;
 import me.kristoprifti.android.popularmovies.models.Movie;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -70,6 +72,28 @@ public class NetworkUtils {
     public static final int INDEX_COLUMN_POPULARITY = 8;
     public static final int INDEX_COLUMN_RATING = 9;
     public static final int INDEX_COLUMN_VOTES = 10;
+
+    private static final String[] TRAILER_COLUMNS = {
+            TrailersContract.TrailersEntry._ID,
+            TrailersContract.TrailersEntry.COLUMN_TRAILER_ID,
+            TrailersContract.TrailersEntry.COLUMN_TRAILER_NAME,
+            TrailersContract.TrailersEntry.COLUMN_TRAILER_KEY
+    };
+
+    public static final int INDEX_COLUMN_TRAILER_ID = 1;
+    public static final int INDEX_COLUMN_TRAILER_NAME = 2;
+    public static final int INDEX_COLUMN_TRAILER_KEY = 3;
+
+    private static final String[] REVIEW_COLUMNS = {
+            ReviewsContract.ReviewsEntry._ID,
+            ReviewsContract.ReviewsEntry.COLUMN_REVIEW_ID,
+            ReviewsContract.ReviewsEntry.COLUMN_REVIEW_AUTHOR,
+            ReviewsContract.ReviewsEntry.COLUMN_REVIEW_CONTENT
+    };
+
+    public static final int INDEX_COLUMN_REVIEW_ID = 1;
+    public static final int INDEX_COLUMN_REVIEW_AUTHOR = 2;
+    public static final int INDEX_COLUMN_REVIEW_CONTENT = 3;
 
     /*
      * NOTE: These values only effect responses from TheMovieDB. They are simply here to allow us to

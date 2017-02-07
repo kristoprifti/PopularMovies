@@ -42,13 +42,5 @@
             android:authorities="@string/package_name"
             android:name=".data.MoviesProvider"
             android:exported="false" />
-        <provider
-            android:authorities="@string/package_name"
-            android:name=".data.TrailersProvider"
-            android:exported="false" />
-        <provider
-            android:authorities="@string/package_name"
-            android:name=".data.ReviewsProvider"
-            android:exported="false" />
     </application>
 </manifest>
