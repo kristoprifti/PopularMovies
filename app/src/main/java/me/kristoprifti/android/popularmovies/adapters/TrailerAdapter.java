@@ -2,11 +2,18 @@ package me.kristoprifti.android.popularmovies.adapters;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.google.android.youtube.player.YouTubeInitializationResult;
+import com.google.android.youtube.player.YouTubeThumbnailLoader;
+import com.google.android.youtube.player.YouTubeThumbnailView;
 
 import java.util.ArrayList;
 
@@ -14,6 +21,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.kristoprifti.android.popularmovies.R;
 import me.kristoprifti.android.popularmovies.models.Trailer;
+import me.kristoprifti.android.popularmovies.utilities.NetworkUtils;
+
+import static android.content.ContentValues.TAG;
 
 /**
  * Created by k.prifti on 3.2.2017 г..
@@ -22,7 +32,7 @@ import me.kristoprifti.android.popularmovies.models.Trailer;
 public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerAdapterViewHolder> {
 
     private ArrayList<Trailer> mTrailersList;
-    private Context mContext;
+    private boolean canPlayVideo = false;
 
     /*
      * An on-click handler that we've defined to make it easy for an Activity to interface with
@@ -34,7 +44,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
      * The interface that receives onClick messages.
      */
     public interface TrailerAdapterOnClickHandler {
-        void onClick(Trailer selectedTrailer);
+        void onClick(Trailer selectedTrailer, boolean canPlayVideo);
     }
 
     /**
@@ -52,7 +62,13 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
      */
     class TrailerAdapterViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         @BindView(R.id.trailerNameTextView)
-        TextView mTrailerNameTextView;
+        TextView trailerNameTextView;
+        @BindView(R.id.play_video)
+        ImageView playTrailerVideo;
+        @BindView(R.id.card_view_overview)
+        CardView trailerCardView;
+        @BindView(R.id.youtube_thumbnail)
+        YouTubeThumbnailView trailerView;
 
         TrailerAdapterViewHolder(View view) {
             super(view);
@@ -69,7 +85,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
         public void onClick(View view) {
             int adapterPosition = getAdapterPosition();
             Trailer currentTrailer = mTrailersList.get(adapterPosition);
-            mClickHandler.onClick(currentTrailer);
+            mClickHandler.onClick(currentTrailer, canPlayVideo);
         }
     }
 
@@ -84,9 +100,9 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
      */
     @Override
     public TrailerAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
-        mContext = viewGroup.getContext();
+        Context context = viewGroup.getContext();
         int layoutIdForListItem = R.layout.trailer_item_row;
-        LayoutInflater inflater = LayoutInflater.from(mContext);
+        LayoutInflater inflater = LayoutInflater.from(context);
 
         View view = inflater.inflate(layoutIdForListItem, viewGroup, false);
         return new TrailerAdapterViewHolder(view);
@@ -103,7 +119,26 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.TrailerA
     @SuppressLint("SetTextI18n")
     @Override
     public void onBindViewHolder(final TrailerAdapterViewHolder trailerAdapterViewHolder, @SuppressLint("RecyclerView") final int position) {
-        trailerAdapterViewHolder.mTrailerNameTextView.setText(mTrailersList.get(position).getTrailerName());
+        trailerAdapterViewHolder.trailerNameTextView.setText(mTrailersList.get(position).getTrailerName());
+
+        trailerAdapterViewHolder.trailerView.initialize(NetworkUtils.YOUTUBE_API_KEY, new YouTubeThumbnailView.OnInitializedListener() {
+            @Override
+            public void onInitializationSuccess(YouTubeThumbnailView youTubeThumbnailView, YouTubeThumbnailLoader youTubeThumbnailLoader) {
+                trailerAdapterViewHolder.trailerNameTextView.setVisibility(View.GONE);
+                youTubeThumbnailLoader.setVideo(mTrailersList.get(position).getTrailerKey());
+                canPlayVideo = true;
+            }
+
+            @Override
+            public void onInitializationFailure(YouTubeThumbnailView youTubeThumbnailView, YouTubeInitializationResult youTubeInitializationResult) {
+                //write something for failure
+                Log.d(TAG, "onInitializationFailure: " + youTubeInitializationResult.toString());
+                youTubeThumbnailView.setVisibility(View.GONE);
+                trailerAdapterViewHolder.playTrailerVideo.setVisibility(View.GONE);
+                trailerAdapterViewHolder.trailerNameTextView.setVisibility(View.VISIBLE);
+                canPlayVideo = false;
+            }
+        });
     }
 
     /**

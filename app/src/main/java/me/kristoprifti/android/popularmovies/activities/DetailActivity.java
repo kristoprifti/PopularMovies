@@ -22,7 +22,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.youtube.player.YouTubeStandalonePlayer;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -518,8 +520,18 @@ public class DetailActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onClick(Trailer selectedTrailer) {
-
+    public void onClick(Trailer selectedTrailer, boolean canPlayVideo) {
+        if(canPlayVideo) {
+            Intent intent = YouTubeStandalonePlayer.createVideoIntent(this,
+                    NetworkUtils.YOUTUBE_API_KEY,
+                    selectedTrailer.getTrailerKey(),//video id
+                    100,     //after this time, video will start automatically
+                    true,    //autoplay or not
+                    false);  //lightbox mode or not; show the video in a small box
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "Please install Youtube to play this video!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

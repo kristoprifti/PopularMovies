@@ -103,6 +103,7 @@ public class NetworkUtils {
     private static final String API_KEY = "9693818fe54e358d73e741ec1472912a";
     private final static String API_KEY_PARAM = "api_key";
     private final static String PAGE_PARAM = "page";
+    public static final String YOUTUBE_API_KEY = "AIzaSyDcRVDICn3l8yPH6y7Wgaon8-FPr2nxVXU";
 
     private static OnDownloadComplete mOnDownloadComplete;
 
