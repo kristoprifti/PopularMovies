@@ -137,10 +137,7 @@ public class MainActivity extends AppCompatActivity implements
             getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, null, this);
         }
 
-        if(!PopularMoviesPreferences.getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites)))
-        {
-            addScrollListenerToNestedScrollView();
-        }
+        addScrollListenerToNestedScrollView();
 
         Log.d(TAG, "onCreate: registering on preference changed listener");
         /*
@@ -157,8 +154,10 @@ public class MainActivity extends AppCompatActivity implements
         mNestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
             @Override
             public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
-                if (scrollY == (v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight())) {
-                    Log.d("kot", "scroll listener " + pageNumber);
+                if (scrollY == (v.getChildAt(0).getMeasuredHeight() - v.getMeasuredHeight()) &&
+                        !PopularMoviesPreferences
+                                .getPreferredSortType(MainActivity.this).equals(getString(R.string.pref_orderby_favorites))) {
+                    Log.d(TAG, "onScrollChange: " + pageNumber);
                     if(loading){
                         loading = false;
                         pageNumber++;

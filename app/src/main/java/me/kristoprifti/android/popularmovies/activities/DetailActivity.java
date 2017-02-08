@@ -156,6 +156,7 @@ public class DetailActivity extends AppCompatActivity implements
                 }
 
                 displayMovieData(movie);
+                initializeQueryHandlers(movie);
 
                 if(savedInstanceState != null &&
                         savedInstanceState.containsKey(getString(R.string.reviews_key)) &&
@@ -183,8 +184,8 @@ public class DetailActivity extends AppCompatActivity implements
                         }
                     });
                 } else {
+                    checkForFavorites(movie);
                     Log.d(TAG, "onCreate: onsavedinstancestate doesnt exist");
-                    initializeQueryHandlers(movie);
                 }
             }
         }
@@ -208,6 +209,7 @@ public class DetailActivity extends AppCompatActivity implements
                 switch (token){
                     case TOKEN_CHECK_IF_FAVORITE:
                         if (cursor != null && cursor.getCount() > 0) {
+                            Log.d(TAG, "onQueryComplete: matching records:" + cursor.getCount());
                             addToFavorites.setImageResource(R.drawable.ic_favorite);
                             isFavorite = true;
                             Log.d(TAG, "onQueryComplete: start trailer query handler");
@@ -307,11 +309,10 @@ public class DetailActivity extends AppCompatActivity implements
                 }
             }
         });
-        
-        checkForFavorites(localMovie);
     }
 
     private void checkForFavorites(Movie localMovie){
+        Log.d(TAG, "checkForFavorites: movie id:" + localMovie.getMovieId());
         sMovieQueryHandler.startQuery(
                 TOKEN_CHECK_IF_FAVORITE,
                 null,
