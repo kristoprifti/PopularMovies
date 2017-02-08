@@ -11,6 +11,7 @@ Project 1 and 2 of Google Associate Android Developer Nanodegree by Udacity
 - Fetched reviews from the database of TheMovieDB
 - Implemented pagination to load more movies from the server each time the user reaches the bottom of recyclerview
 - Implemented Database interaction for trailers and reviews
+- Implemented Video Playback for trailers with Youtube Android API
 
 **To-DO:**
 - implement Master/Detail flow in the UI for tablets 
@@ -20,3 +21,4 @@ Project 1 and 2 of Google Associate Android Developer Nanodegree by Udacity
 - OkHttp library for communication with the server
 - Image loading and image caching library Picasso
 - Field and method binding library ButterKnife
+- Youtube Android API - library that plays trailer videos as a standalone player only if the user has Youtube App installed on his device
