@@ -282,12 +282,11 @@ public class MainActivity extends AppCompatActivity implements
      * @param selectedMovie object representing movie details for a particular movie
      */
     @Override
-    public void onClick(Movie selectedMovie, View view, int colorPalette) {
+    public void onClick(Movie selectedMovie, View view) {
         Context context = this;
         Class destinationClass = DetailActivity.class;
         Intent intentToStartDetailActivity = new Intent(context, destinationClass);
         intentToStartDetailActivity.putExtra(getString(R.string.intent_movie_object), selectedMovie);
-        intentToStartDetailActivity.putExtra(getString(R.string.intent_color_integer), colorPalette);
 
         ImageView posterView = (ImageView) view.findViewById(R.id.iv_movie_poster);
         ActivityOptionsCompat options = ActivityOptionsCompat.

@@ -3,15 +3,20 @@ package me.kristoprifti.android.popularmovies.activities;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -107,6 +112,7 @@ public class DetailActivity extends AppCompatActivity implements
     private ArrayList<Review> mReviewsList;
 
     private boolean isFavorite = false;
+    private int colorPalette;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,7 +124,6 @@ public class DetailActivity extends AppCompatActivity implements
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         ActivityCompat.postponeEnterTransition(this);
-        int colorPalette;
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -140,13 +145,6 @@ public class DetailActivity extends AppCompatActivity implements
             reviewsRecyclerView.setHasFixedSize(true);
             //* attaching the adapter to the recyclerview *//*
             reviewsRecyclerView.setAdapter(mReviewAdapter);
-
-            if (intent.hasExtra(getString(R.string.intent_color_integer)) && intent.getIntExtra(getString(R.string.intent_color_integer), 0) != 0) {
-                colorPalette = intent.getIntExtra(getString(R.string.intent_color_integer), 0);
-            } else {
-                colorPalette = R.color.colorPrimary;
-            }
-            colorizeActivity(colorPalette);
 
             if (intent.hasExtra(getString(R.string.intent_movie_object))) {
                 final Movie movie = intent.getParcelableExtra(getString(R.string.intent_movie_object));
@@ -401,11 +399,28 @@ public class DetailActivity extends AppCompatActivity implements
         Picasso.with(this).load(movie.getPosterPath()).into(mMoviePosterImageView, new Callback() {
             @Override
             public void onSuccess() {
+                BitmapDrawable drawable = (BitmapDrawable) mMoviePosterImageView.getDrawable();
+                Bitmap bitmap = drawable.getBitmap();
+                Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+                    @Override
+                    public void onGenerated(Palette palette) {
+                        //work with the palette here
+                        if(palette.getDarkVibrantColor(ContextCompat.getColor(DetailActivity.this, R.color.colorPrimary)) != 0) {
+                            colorPalette = palette.getDarkVibrantColor(ContextCompat.getColor(DetailActivity.this, R.color.colorPrimary));
+                        } else {
+                            colorPalette = ContextCompat.getColor(DetailActivity.this, R.color.colorPrimary);
+                        }
+                        colorizeActivity(colorPalette);
+                    }
+                });
                 ActivityCompat.startPostponedEnterTransition(DetailActivity.this);
             }
 
             @Override
             public void onError() {
+                colorPalette = ContextCompat.getColor(DetailActivity.this, R.color.colorPrimary);
+                colorizeActivity(colorPalette);
                 ActivityCompat.startPostponedEnterTransition(DetailActivity.this);
                 mMoviePosterImageView.setImageResource(R.mipmap.ic_launcher);
             }
