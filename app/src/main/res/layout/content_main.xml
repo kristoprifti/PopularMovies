@@ -1,48 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.NestedScrollView
+<fragment
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_movies"
+    android:name="me.kristoprifti.android.popularmovies.fragments.MainActivityFragment"
+    tools:layout="@layout/fragment_main"
+    android:layout_marginTop="?attr/actionBarSize"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    app:behavior_overlapTop="64dp"
-    android:id="@+id/nestedScrollView"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <FrameLayout
-        android:id="@+id/mainView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/rv_movies"
-                android:nestedScrollingEnabled="false"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                tools:targetApi="lollipop" />
-
-            <ProgressBar
-                android:layout_margin="10dp"
-                android:id="@+id/pb_load_more_indicator"
-                android:layout_height="42dp"
-                android:layout_width="42dp"
-                android:layout_gravity="center_horizontal|bottom"
-                android:visibility="gone" />
-
-        </LinearLayout>
-
-        <ProgressBar
-            android:id="@+id/pb_loading_indicator"
-            android:layout_height="42dp"
-            android:layout_width="42dp"
-            android:layout_gravity="center"
-            android:visibility="invisible" />
-
-    </FrameLayout>
-
-</android.support.v4.widget.NestedScrollView>
+    android:layout_height="match_parent" />
