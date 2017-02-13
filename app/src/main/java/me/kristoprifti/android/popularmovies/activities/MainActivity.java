@@ -48,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
 
     @Override
     public void onItemSelected(Movie movie, View view) {
+        Log.d(TAG, "onItemSelected: starts");
         if (mTwoPane) {
             Bundle arguments = new Bundle();
             arguments.putParcelable(getString(R.string.intent_movie_object), movie);
@@ -69,5 +70,6 @@ public class MainActivity extends AppCompatActivity implements MainActivityFragm
                     makeSceneTransitionAnimation(this, posterView, getString(R.string.poster_transition));
             startActivity(intentToStartDetailActivity, options.toBundle());
         }
+        Log.d(TAG, "onItemSelected: ends");
     }
 }
