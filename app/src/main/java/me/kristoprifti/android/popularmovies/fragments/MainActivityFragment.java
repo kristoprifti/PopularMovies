@@ -371,6 +371,12 @@ public class MainActivityFragment extends Fragment implements MovieAdapter.Movie
     @Override
     public void onStart() {
         super.onStart();
+
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.movie_detail_container, new DetailActivityFragment(),
+                        DetailActivityFragment.TAG)
+                .commit();
+
         /*
          * If the preferences for sorting have changed since the user was last in
          * MainActivity, perform another query and set the flag to false.

@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -112,6 +113,8 @@ public class DetailActivityFragment extends Fragment implements
     RecyclerView trailersRecyclerView;
     @BindView(R.id.reviewsRecyclerView)
     RecyclerView reviewsRecyclerView;
+    @BindView(R.id.mainWindow)
+    CoordinatorLayout mainWindow;
 
     private ArrayList<Trailer> mTrailersList;
     private ArrayList<Review> mReviewsList;
@@ -195,6 +198,7 @@ public class DetailActivityFragment extends Fragment implements
                 checkForFavorites(movie);
                 Log.d(TAG, "onCreate: onsavedinstancestate doesnt exist");
             }
+            mainWindow.setVisibility(View.VISIBLE);
         }
 
         return rootView;

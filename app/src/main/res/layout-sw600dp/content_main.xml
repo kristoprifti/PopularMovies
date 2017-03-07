@@ -10,6 +10,7 @@
 
     <fragment
         android:id="@+id/fragment_movie"
+        android:layout_marginTop="?attr/actionBarSize"
         android:name="me.kristoprifti.android.popularmovies.fragments.MainActivityFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
